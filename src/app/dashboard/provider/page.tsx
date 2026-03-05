@@ -10,11 +10,11 @@ export default async function ProviderDashboard() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*, provider_details(*)')
-    .eq('id', user.id)
-    .single()
+  const [{ data: profile }, { count: serviceCount }, { count: portfolioCount }] = await Promise.all([
+    supabase.from('profiles').select('*, provider_details(*)').eq('id', user.id).single(),
+    supabase.from('services').select('*', { count: 'exact', head: true }).eq('provider_id', user.id),
+    supabase.from('portfolio_items').select('*', { count: 'exact', head: true }).eq('provider_id', user.id),
+  ])
 
   const details = profile?.provider_details
 
@@ -41,8 +41,8 @@ export default async function ProviderDashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard icon={<Star className="h-5 w-5 text-amber-500" />} label="Rating" value={details?.avg_rating ? `${details.avg_rating} / 5` : '—'} />
         <StatCard icon={<MessageSquare className="h-5 w-5 text-blue-500" />} label="Reviews" value={details?.review_count ?? 0} />
-        <StatCard icon={<Briefcase className="h-5 w-5 text-green-500" />} label="Services" value="—" />
-        <StatCard icon={<Image className="h-5 w-5 text-purple-500" />} label="Portfolio" value="—" />
+        <StatCard icon={<Briefcase className="h-5 w-5 text-green-500" />} label="Services" value={serviceCount ?? 0} />
+        <StatCard icon={<Image className="h-5 w-5 text-purple-500" />} label="Portfolio" value={portfolioCount ?? 0} />
       </div>
 
       {/* Quick links */}
