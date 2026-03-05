@@ -8,9 +8,36 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { QuoteRequestForm } from '@/components/provider/QuoteRequestForm'
 import { cn } from '@/lib/utils'
+import type { Metadata } from 'next'
 
 interface ProviderPageProps {
   params: Promise<{ id: string }>
+}
+
+export async function generateMetadata({ params }: ProviderPageProps): Promise<Metadata> {
+  const { id } = await params
+  const supabase = await createClient()
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('full_name, city, bio, provider_details(business_name)')
+    .eq('id', id)
+    .eq('role', 'provider')
+    .single()
+
+  if (!profile) return { title: 'Provider not found' }
+
+  const details = profile.provider_details as { business_name: string } | null
+  const name    = details?.business_name ?? profile.full_name
+  const title   = `${name} — LocalExpert`
+  const description = profile.bio
+    ?? `${name} is a trusted local professional${profile.city ? ` in ${profile.city}` : ''}. View their services and request a quote.`
+
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: 'profile' },
+  }
 }
 
 export default async function ProviderProfilePage({ params }: ProviderPageProps) {

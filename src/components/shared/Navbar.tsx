@@ -1,8 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { LogOut, User } from 'lucide-react'
+import { LogOut, User, Search, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { logout } from '@/app/(auth)/actions'
 
@@ -19,8 +18,16 @@ export default function Navbar({ user }: NavbarProps) {
   return (
     <header className="border-b border-border bg-white">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/dashboard" className="text-xl font-bold text-primary">
-          LocalExpert
+        <Link href="/" className="flex items-center gap-1.5">
+          <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary">
+            <MapPin className="h-4 w-4 text-white fill-white" />
+          </div>
+          <span className="text-xl font-bold tracking-tight">
+            Local<span className="text-primary">Expert</span>
+          </span>
+        </Link>
+        <Link href="/search" className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <Search className="h-4 w-4" /> Browse
         </Link>
 
         <div className="flex items-center gap-4">

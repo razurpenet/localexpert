@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { ArrowRight } from 'lucide-react'
+import { ReviewSection } from '@/components/shared/ReviewSection'
 
 const STATUS_STYLES: Record<string, string> = {
   pending:   'bg-amber-100 text-amber-700',
@@ -33,6 +34,14 @@ export default async function CustomerRequestsPage() {
     .eq('customer_id', user.id)
     .order('created_at', { ascending: false })
 
+  // Get request IDs that already have a review
+  const completedIds = requests?.filter((r) => r.status === 'completed').map((r) => r.id) ?? []
+  const { data: existingReviews } = completedIds.length > 0
+    ? await supabase.from('reviews').select('request_id').in('request_id', completedIds)
+    : { data: [] }
+
+  const reviewedRequestIds = new Set(existingReviews?.map((r) => r.request_id) ?? [])
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
@@ -57,7 +66,9 @@ export default async function CustomerRequestsPage() {
               full_name: string
               provider_details: { business_name: string } | null
             } | null
-            const service = r.services as { title: string } | null
+            const service    = r.services as { title: string } | null
+            const canReview  = r.status === 'completed' && !reviewedRequestIds.has(r.id)
+            const hasReview  = r.status === 'completed' && reviewedRequestIds.has(r.id)
 
             return (
               <div key={r.id} className="bg-white rounded-xl border border-border p-5 space-y-3">
@@ -67,9 +78,7 @@ export default async function CustomerRequestsPage() {
                       {provider?.provider_details?.business_name ?? provider?.full_name ?? 'Provider'}
                     </p>
                     {service && (
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {service.title}
-                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{service.title}</p>
                     )}
                   </div>
                   <span className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${STATUS_STYLES[r.status]}`}>
@@ -95,6 +104,14 @@ export default async function CustomerRequestsPage() {
                     </Button>
                   )}
                 </div>
+
+                {/* Review section */}
+                {canReview && provider?.id && (
+                  <ReviewSection requestId={r.id} providerId={provider.id} />
+                )}
+                {hasReview && (
+                  <p className="text-xs text-emerald-600 font-medium">✓ Review submitted</p>
+                )}
               </div>
             )
           })}
