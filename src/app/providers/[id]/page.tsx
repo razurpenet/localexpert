@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { QuoteRequestForm } from '@/components/provider/QuoteRequestForm'
+import PublicNavbar from '@/components/shared/PublicNavbar'
 import { cn } from '@/lib/utils'
 import type { Metadata } from 'next'
 
@@ -95,6 +96,7 @@ export default async function ProviderProfilePage({ params }: ProviderPageProps)
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <PublicNavbar />
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
 
         {/* Header card */}

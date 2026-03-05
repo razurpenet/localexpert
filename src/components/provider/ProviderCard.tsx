@@ -18,7 +18,7 @@ export interface ProviderCardData {
   primary_category?: string | null
 }
 
-export function ProviderCard({ provider }: { provider: ProviderCardData }) {
+export function ProviderCard({ provider, distanceMiles, minPrice }: { provider: ProviderCardData; distanceMiles?: number; minPrice?: number }) {
   const details = provider.provider_details
 
   return (
@@ -58,12 +58,19 @@ export function ProviderCard({ provider }: { provider: ProviderCardData }) {
         {provider.primary_category && (
           <Badge variant="secondary" className="text-xs">{provider.primary_category}</Badge>
         )}
-        {provider.city && (
+        {distanceMiles !== undefined ? (
+          <span className="flex items-center gap-1 text-xs font-medium text-primary">
+            <MapPin className="h-3 w-3" />
+            {distanceMiles < 1
+              ? 'Less than 1 mile away'
+              : `${distanceMiles.toFixed(1)} miles away`}
+          </span>
+        ) : provider.city ? (
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <MapPin className="h-3 w-3" />
             {provider.city}
           </span>
-        )}
+        ) : null}
       </div>
 
       {/* Footer */}
@@ -77,12 +84,19 @@ export function ProviderCard({ provider }: { provider: ProviderCardData }) {
             ({details?.review_count ?? 0} {details?.review_count === 1 ? 'review' : 'reviews'})
           </span>
         </div>
-        <span className={cn(
-          'text-xs font-medium',
-          details?.is_available ? 'text-emerald-600' : 'text-muted-foreground'
-        )}>
-          {details?.is_available ? 'Available now' : 'Unavailable'}
-        </span>
+        <div className="flex items-center gap-2">
+          {minPrice !== undefined && (
+            <span className="text-xs font-medium text-muted-foreground">
+              from £{minPrice}
+            </span>
+          )}
+          <span className={cn(
+            'text-xs font-medium',
+            details?.is_available ? 'text-emerald-600' : 'text-muted-foreground'
+          )}>
+            {details?.is_available ? 'Available now' : 'Unavailable'}
+          </span>
+        </div>
       </div>
     </Link>
   )

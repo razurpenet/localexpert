@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import SubmitButton from '@/components/shared/SubmitButton'
+import { LocationDetector } from '@/components/provider/LocationDetector'
 
 export default async function ProviderSetupPage() {
   const supabase = await createClient()
@@ -17,6 +18,13 @@ export default async function ProviderSetupPage() {
   const { data: existing } = await supabase
     .from('provider_details')
     .select('*')
+    .eq('id', user.id)
+    .single()
+
+  // Pre-fill location from profiles
+  const { data: profileLoc } = await supabase
+    .from('profiles')
+    .select('postcode, lat, lng')
     .eq('id', user.id)
     .single()
 
@@ -86,6 +94,12 @@ export default async function ProviderSetupPage() {
                 defaultChecked={existing?.is_available ?? true}
               />
             </div>
+
+            <LocationDetector
+              defaultPostcode={profileLoc?.postcode ?? undefined}
+              defaultLat={profileLoc?.lat ?? null}
+              defaultLng={profileLoc?.lng ?? null}
+            />
 
             <SubmitButton>
               {existing ? 'Save changes' : 'Complete setup'}

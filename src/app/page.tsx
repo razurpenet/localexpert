@@ -1,11 +1,13 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
-import { Search, Star, Shield, Zap, MapPin } from 'lucide-react'
+import { Shield, Star, Zap } from 'lucide-react'
+import { AnimatedHero } from '@/components/home/AnimatedHero'
+import { AnimatedTestimonials, type Testimonial } from '@/components/shared/AnimatedTestimonials'
+import PublicNavbar from '@/components/shared/PublicNavbar'
 
 export default async function HomePage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
 
   const { data: categories } = await supabase
     .from('categories')
@@ -13,54 +15,35 @@ export default async function HomePage() {
     .order('name')
     .limit(8)
 
+  // Fetch top-rated reviews with body text for the testimonials section
+  const { data: rawReviews } = await supabase
+    .from('reviews')
+    .select('body, rating, profiles(full_name, avatar_url, city)')
+    .not('body', 'is', null)
+    .gte('rating', 4)
+    .order('created_at', { ascending: false })
+    .limit(6)
+
+  const testimonials: Testimonial[] = (rawReviews ?? [])
+    .filter((r) => r.body && r.body.trim().length > 10)
+    .map((r) => {
+      const reviewer = r.profiles as unknown as { full_name: string; avatar_url: string | null; city: string | null } | null
+      const name = reviewer?.full_name ?? 'Verified Customer'
+      return {
+        quote: r.body as string,
+        name,
+        designation: reviewer?.city ? `Customer in ${reviewer.city}` : 'Verified Customer',
+        src: reviewer?.avatar_url
+          ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=e2e8f0&color=475569&size=500`,
+      }
+    })
+
   return (
     <div className="min-h-screen bg-white">
-      {/* Navbar */}
-      <header className="border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-1.5">
-            <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary">
-              <MapPin className="h-4 w-4 text-white fill-white" />
-            </div>
-            <span className="text-xl font-bold tracking-tight">
-              Local<span className="text-primary">Expert</span>
-            </span>
-          </Link>
-          <div className="flex items-center gap-3">
-            {user ? (
-              <Button asChild><Link href="/dashboard">Dashboard</Link></Button>
-            ) : (
-              <>
-                <Button asChild variant="ghost"><Link href="/login">Sign in</Link></Button>
-                <Button asChild><Link href="/signup">Get started</Link></Button>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
+      <PublicNavbar />
 
-      {/* Hero */}
-      <section className="bg-slate-50 py-24 px-4 text-center">
-        <div className="max-w-2xl mx-auto space-y-6">
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
-            Find trusted local<br />professionals
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Connect with verified handymen, caterers, cleaners, and more — all in your area.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button asChild size="lg">
-              <Link href="/search">
-                <Search className="h-4 w-4 mr-2" />
-                Find a professional
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline">
-              <Link href="/signup?role=provider">List your services</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+      {/* Animated Hero */}
+      <AnimatedHero />
 
       {/* Categories */}
       {categories && categories.length > 0 && (
@@ -90,8 +73,21 @@ export default async function HomePage() {
         </section>
       )}
 
+      {/* Animated Testimonials — shown only when real reviews exist */}
+      {testimonials.length >= 2 && (
+        <section className="bg-slate-50 py-8 px-4">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-2xl font-bold text-center mb-2">What customers say</h2>
+            <p className="text-center text-muted-foreground text-sm mb-4">
+              Real reviews from verified customers
+            </p>
+            <AnimatedTestimonials testimonials={testimonials} autoplay />
+          </div>
+        </section>
+      )}
+
       {/* Trust signals */}
-      <section className="bg-slate-50 py-16 px-4">
+      <section id="how-it-works" className="bg-slate-50 py-16 px-4">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-bold text-center mb-10">Why LocalExpert?</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
@@ -141,16 +137,30 @@ export default async function HomePage() {
 }
 
 const CATEGORY_EMOJI: Record<string, string> = {
-  'plumbing':        '🔧',
-  'electrical':      '⚡',
-  'cleaning':        '✨',
-  'catering':        '🍽️',
-  'carpentry':       '🪚',
-  'painting':        '🖌️',
-  'gardening':       '🌿',
-  'moving-removals': '🚛',
-  'beauty-wellness': '💆',
-  'photography':     '📷',
-  'tutoring':        '📚',
-  'it-tech-support': '💻',
+  // Original 12
+  'plumbing':           '🔧',
+  'electrical':         '⚡',
+  'cleaning':           '✨',
+  'catering':           '🍽️',
+  'carpentry':          '🪚',
+  'painting':           '🖌️',
+  'gardening':          '🌿',
+  'moving-removals':    '🚛',
+  'beauty-wellness':    '💆',
+  'photography':        '📷',
+  'tutoring':           '📚',
+  'it-tech-support':    '💻',
+  // New 12 — data-backed additions (March 2026)
+  'locksmith':          '🔒',
+  'roofing':            '🏠',
+  'appliance-repair':   '🔌',
+  'mobile-mechanic':    '🚗',
+  'pet-care':           '🐾',
+  'home-care':          '🏥',
+  'childcare':          '👶',
+  'personal-training':  '💪',
+  'pest-control':       '🐀',
+  'solar-ev':           '☀️',
+  'event-planning':     '🎉',
+  'driving-instruction':'🚦',
 }
