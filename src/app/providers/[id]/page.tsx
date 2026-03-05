@@ -1,8 +1,12 @@
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { MapPin, Star, Clock, Globe, CheckCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { QuoteRequestForm } from '@/components/provider/QuoteRequestForm'
 import { cn } from '@/lib/utils'
 
 interface ProviderPageProps {
@@ -12,6 +16,12 @@ interface ProviderPageProps {
 export default async function ProviderProfilePage({ params }: ProviderPageProps) {
   const { id } = await params
   const supabase = await createClient()
+
+  // Get current user to determine if quote form should show
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: currentProfile } = user
+    ? await supabase.from('profiles').select('role').eq('id', user.id).single()
+    : { data: null }
 
   const [
     { data: profile },
@@ -205,6 +215,32 @@ export default async function ProviderProfilePage({ params }: ProviderPageProps)
             </div>
           </section>
         )}
+
+        {/* Quote Request */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Request a quote</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!user ? (
+              <div className="text-center space-y-3 py-4">
+                <p className="text-sm text-muted-foreground">Sign in to contact this provider</p>
+                <Button asChild>
+                  <Link href="/login">Sign in</Link>
+                </Button>
+              </div>
+            ) : currentProfile?.role === 'provider' ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                Switch to a customer account to send quote requests.
+              </p>
+            ) : (
+              <QuoteRequestForm
+                providerId={id}
+                services={(services ?? []).map((s) => ({ id: s.id, title: s.title }))}
+              />
+            )}
+          </CardContent>
+        </Card>
 
       </div>
     </div>
