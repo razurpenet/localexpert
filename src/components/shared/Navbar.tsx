@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { LogOut, User, Search, MapPin } from 'lucide-react'
+import { LogOut, User, Search, MapPin, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { logout } from '@/app/(auth)/actions'
 
@@ -23,7 +23,7 @@ export default function Navbar({ user }: NavbarProps) {
             <MapPin className="h-4 w-4 text-white fill-white" />
           </div>
           <span className="text-xl font-bold tracking-tight">
-            Local<span className="text-primary">Expert</span>
+            Hand<span className="text-primary">by</span>
           </span>
         </Link>
         <Link href="/search" className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -41,6 +41,11 @@ export default function Navbar({ user }: NavbarProps) {
             )}
           </div>
 
+          <Link href="/dashboard/settings">
+            <Button variant="ghost" size="sm" asChild>
+              <span><Settings className="h-4 w-4 mr-1" />Settings</span>
+            </Button>
+          </Link>
           <form action={logout}>
             <Button variant="ghost" size="sm" type="submit">
               <LogOut className="h-4 w-4 mr-1" />

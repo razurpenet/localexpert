@@ -1,13 +1,13 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { saveProviderDetails } from './actions'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import SubmitButton from '@/components/shared/SubmitButton'
 import { LocationDetector } from '@/components/provider/LocationDetector'
+import { AvatarUpload } from '@/components/provider/AvatarUpload'
 
 export default async function ProviderSetupPage() {
   const supabase = await createClient()
@@ -21,10 +21,10 @@ export default async function ProviderSetupPage() {
     .eq('id', user.id)
     .single()
 
-  // Pre-fill location from profiles
+  // Pre-fill location + avatar from profiles
   const { data: profileLoc } = await supabase
     .from('profiles')
-    .select('postcode, lat, lng')
+    .select('postcode, lat, lng, avatar_url, full_name')
     .eq('id', user.id)
     .single()
 
@@ -38,6 +38,21 @@ export default async function ProviderSetupPage() {
           This is what customers will see when they find you.
         </p>
       </div>
+
+      {/* Profile photo — uploaded separately, outside the main form */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Profile photo</CardTitle>
+          <CardDescription>A clear photo helps customers trust you</CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center">
+          <AvatarUpload
+            userId={user.id}
+            currentUrl={profileLoc?.avatar_url ?? null}
+            fullName={profileLoc?.full_name ?? user.email ?? ''}
+          />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

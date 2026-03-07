@@ -28,9 +28,9 @@ export async function generateMetadata({ params }: ProviderPageProps): Promise<M
 
   if (!profile) return { title: 'Provider not found' }
 
-  const details = profile.provider_details as { business_name: string } | null
+  const details = profile.provider_details as unknown as { business_name: string } | null
   const name    = details?.business_name ?? profile.full_name
-  const title   = `${name} — LocalExpert`
+  const title   = `${name} — Handby`
   const description = profile.bio
     ?? `${name} is a trusted local professional${profile.city ? ` in ${profile.city}` : ''}. View their services and request a quote.`
 

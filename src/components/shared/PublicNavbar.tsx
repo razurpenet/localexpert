@@ -16,7 +16,7 @@ export default async function PublicNavbar() {
             <MapPin className="h-4 w-4 text-white fill-white" />
           </div>
           <span className="text-xl font-bold tracking-tight">
-            Local<span className="text-primary">Expert</span>
+            Hand<span className="text-primary">by</span>
           </span>
         </Link>
 

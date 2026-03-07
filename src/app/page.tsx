@@ -5,6 +5,7 @@ import { Shield, Star, Zap } from 'lucide-react'
 import { AnimatedHero } from '@/components/home/AnimatedHero'
 import { AnimatedTestimonials, type Testimonial } from '@/components/shared/AnimatedTestimonials'
 import PublicNavbar from '@/components/shared/PublicNavbar'
+import HandbyFooter from '@/components/ui/footer-column'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -89,7 +90,7 @@ export default async function HomePage() {
       {/* Trust signals */}
       <section id="how-it-works" className="bg-slate-50 py-16 px-4">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-10">Why LocalExpert?</h2>
+          <h2 className="text-2xl font-bold text-center mb-10">Why Handby?</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
             <div className="space-y-3">
               <div className="flex justify-center">
@@ -128,10 +129,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border py-8 px-4 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} LocalExpert. All rights reserved.
-      </footer>
+      <HandbyFooter />
     </div>
   )
 }

@@ -28,7 +28,7 @@ export default function LoginPage() {
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
-        <CardDescription>Sign in to your LocalExpert account</CardDescription>
+        <CardDescription>Sign in to your Handby account</CardDescription>
       </CardHeader>
 
       <form onSubmit={handleSubmit}>

@@ -35,7 +35,7 @@ export default function SignupPage() {
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-        <CardDescription>Join LocalExpert as a customer or provider</CardDescription>
+        <CardDescription>Join Handby as a customer or provider</CardDescription>
       </CardHeader>
 
       <form onSubmit={handleSubmit}>

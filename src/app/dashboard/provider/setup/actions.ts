@@ -33,7 +33,7 @@ export async function saveProviderDetails(formData: FormData) {
     is_available: formData.get('is_available') === 'on',
   })
 
-  if (error) return { error: error.message }
+  if (error) throw new Error(error.message)
 
   // Save location fields to profiles
   const locationUpdate: Record<string, unknown> = { postcode }
