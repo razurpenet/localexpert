@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, MessageCircle } from 'lucide-react'
 import { ReviewSection } from '@/components/shared/ReviewSection'
 
 const STATUS_STYLES: Record<string, string> = {
@@ -96,13 +96,23 @@ export default async function CustomerRequestsPage() {
                       day: 'numeric', month: 'short', year: 'numeric',
                     })}
                   </p>
-                  {provider?.id && (
-                    <Button asChild variant="ghost" size="sm" className="text-xs">
-                      <Link href={`/providers/${provider.id}`}>
-                        View profile <ArrowRight className="h-3 w-3 ml-1" />
-                      </Link>
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-1">
+                    {r.status === 'accepted' && (
+                      <Button asChild size="sm" className="text-xs">
+                        <Link href={`/dashboard/chat/${r.id}`}>
+                          <MessageCircle className="h-3 w-3 mr-1.5" />
+                          Open Chat
+                        </Link>
+                      </Button>
+                    )}
+                    {provider?.id && (
+                      <Button asChild variant="ghost" size="sm" className="text-xs">
+                        <Link href={`/providers/${provider.id}`}>
+                          View profile <ArrowRight className="h-3 w-3 ml-1" />
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Review section */}

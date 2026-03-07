@@ -248,7 +248,7 @@ export default async function ProviderProfilePage({ params }: ProviderPageProps)
         {/* Quote Request */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Request a quote</CardTitle>
+            <CardTitle className="text-base">Get the help you need</CardTitle>
           </CardHeader>
           <CardContent>
             {!user ? (

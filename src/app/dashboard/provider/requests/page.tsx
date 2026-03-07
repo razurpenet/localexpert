@@ -1,8 +1,10 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { updateRequestStatus } from './actions'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { MessageCircle } from 'lucide-react'
 
 const STATUS_STYLES: Record<string, string> = {
   pending:   'bg-amber-100 text-amber-700',
@@ -29,14 +31,14 @@ export default async function ProviderRequestsPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">Quote Requests</h1>
+        <h1 className="text-2xl font-bold">Customer Requests</h1>
         <p className="text-muted-foreground text-sm mt-1">
           Respond to customer enquiries below.
         </p>
       </div>
 
       <RequestGroup title="New requests" requests={pending} showActions />
-      <RequestGroup title="Active jobs" requests={active} showComplete />
+      <RequestGroup title="Active jobs" requests={active} showComplete showChat />
       <RequestGroup title="Past requests" requests={past} />
     </div>
   )
@@ -47,11 +49,13 @@ function RequestGroup({
   requests,
   showActions = false,
   showComplete = false,
+  showChat = false,
 }: {
   title: string
   requests: any[]
   showActions?: boolean
   showComplete?: boolean
+  showChat?: boolean
 }) {
   if (requests.length === 0) return null
 
@@ -104,9 +108,19 @@ function RequestGroup({
             )}
 
             {showComplete && (
-              <form action={updateRequestStatus.bind(null, r.id, 'completed')}>
-                <Button type="submit" size="sm" variant="outline">Mark as completed</Button>
-              </form>
+              <div className="flex gap-2 items-center">
+                <form action={updateRequestStatus.bind(null, r.id, 'completed')}>
+                  <Button type="submit" size="sm" variant="outline">Mark as completed</Button>
+                </form>
+                {showChat && (
+                  <Button asChild size="sm">
+                    <Link href={`/dashboard/chat/${r.id}`}>
+                      <MessageCircle className="h-3.5 w-3.5 mr-1.5" />
+                      Open Chat
+                    </Link>
+                  </Button>
+                )}
+              </div>
             )}
           </div>
         )

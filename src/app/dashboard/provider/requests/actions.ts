@@ -15,5 +15,9 @@ export async function updateRequestStatus(requestId: string, status: 'accepted' 
     .eq('id', requestId)
     .eq('provider_id', user.id)
 
+  if (status === 'accepted') {
+    redirect(`/dashboard/chat/${requestId}`)
+  }
+
   revalidatePath('/dashboard/provider/requests')
 }

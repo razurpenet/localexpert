@@ -98,7 +98,7 @@ export function QuoteRequestForm({ providerId, services }: QuoteRequestFormProps
       )}
 
       <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? 'Sending…' : 'Send quote request'}
+        {loading ? 'Sending…' : 'Send request'}
       </Button>
     </form>
   )
