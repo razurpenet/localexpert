@@ -23,7 +23,7 @@ interface Message {
 
 export default function ChatScreen() {
   const { requestId } = useLocalSearchParams<{ requestId: string }>()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const router = useRouter()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -137,7 +137,13 @@ export default function ChatScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => {
+          if (router.canGoBack()) {
+            router.back()
+          } else {
+            router.replace(profile?.role === 'provider' ? '/(provider)/requests' : '/(customer)/bookings')
+          }
+        }}>
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{otherName ?? 'Chat'}</Text>
