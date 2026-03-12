@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ScrollView, View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator, TextInput, Alert, Platform } from 'react-native'
+import { ScrollView, View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator, TextInput, Alert, Platform, FlatList } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -46,6 +46,8 @@ export default function ProviderProfileScreen() {
   const [selectedService, setSelectedService] = useState<any>(null)
   const [urgency, setUrgency] = useState<'flexible' | 'this_week' | 'urgent'>('flexible')
   const [preferredTime, setPreferredTime] = useState<'morning' | 'afternoon' | 'evening' | 'flexible'>('flexible')
+  const [albums, setAlbums] = useState<string[]>([])
+  const [activeAlbumFilter, setActiveAlbumFilter] = useState<string | null>(null)
 
   useEffect(() => {
     if (!id) return
@@ -53,15 +55,17 @@ export default function ProviderProfileScreen() {
     Promise.all([
       supabase.from('profiles').select('*, provider_details(*)').eq('id', id).single(),
       supabase.from('services').select('*, categories(name)').eq('provider_id', id).eq('is_active', true),
-      supabase.from('portfolio_items').select('*').eq('provider_id', id).order('created_at', { ascending: false }).limit(9),
+      supabase.from('portfolio_items').select('*, album').eq('provider_id', id).order('created_at', { ascending: false }),
       supabase.from('reviews').select('*, profiles!reviews_reviewer_id_fkey(full_name, avatar_url)').eq('provider_id', id).order('created_at', { ascending: false }),
       supabase.from('credentials').select('*').eq('provider_id', id).eq('verified', true),
-    ]).then(([profileRes, servicesRes, portfolioRes, reviewsRes, credRes]) => {
+      supabase.from('portfolio_albums').select('name, sort_order').eq('provider_id', id).order('sort_order', { ascending: true }),
+    ]).then(([profileRes, servicesRes, portfolioRes, reviewsRes, credRes, albumsRes]) => {
       setProvider(profileRes.data)
       setServices(servicesRes.data ?? [])
       setPortfolio(portfolioRes.data ?? [])
       setReviews(reviewsRes.data ?? [])
       setCredentials(credRes.data ?? [])
+      setAlbums((albumsRes.data ?? []).map((a: any) => a.name))
       setLoading(false)
     })
 
@@ -321,8 +325,29 @@ export default function ProviderProfileScreen() {
         {portfolio.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Portfolio</Text>
+            {albums.length > 0 && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.albumFilterBar}>
+                <View style={styles.albumFilterRow}>
+                  <TouchableOpacity
+                    style={[styles.albumFilterChip, activeAlbumFilter === null && styles.albumFilterChipActive]}
+                    onPress={() => setActiveAlbumFilter(null)}
+                  >
+                    <Text style={[styles.albumFilterText, activeAlbumFilter === null && styles.albumFilterTextActive]}>All</Text>
+                  </TouchableOpacity>
+                  {albums.map(name => (
+                    <TouchableOpacity
+                      key={name}
+                      style={[styles.albumFilterChip, activeAlbumFilter === name && styles.albumFilterChipActive]}
+                      onPress={() => setActiveAlbumFilter(name)}
+                    >
+                      <Text style={[styles.albumFilterText, activeAlbumFilter === name && styles.albumFilterTextActive]}>{name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+            )}
             <View style={styles.portfolioGrid}>
-              {portfolio.map(p => (
+              {(activeAlbumFilter ? portfolio.filter((p: any) => p.album === activeAlbumFilter) : portfolio).map((p: any) => (
                 <Image key={p.id} source={{ uri: p.image_url }} style={styles.portfolioImg} />
               ))}
             </View>
@@ -508,6 +533,16 @@ const styles = StyleSheet.create({
   serviceCategory: { fontSize: 13, color: '#1E40AF', marginTop: 2 },
   servicePrice: { fontSize: 15, fontWeight: '700', color: '#1E3A8A' },
   // Portfolio
+  albumFilterBar: { marginBottom: 12 },
+  albumFilterRow: { flexDirection: 'row', gap: 8 },
+  albumFilterChip: {
+    backgroundColor: '#FFFFFF', borderRadius: 16,
+    paddingHorizontal: 14, paddingVertical: 6,
+    borderWidth: 1, borderColor: '#E0E7FF',
+  },
+  albumFilterChipActive: { backgroundColor: '#1E40AF', borderColor: '#1E40AF' },
+  albumFilterText: { fontSize: 13, fontWeight: '600', color: '#1E3A8A' },
+  albumFilterTextActive: { color: '#FFFFFF' },
   portfolioGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   portfolioImg: { width: '31%', aspectRatio: 1, borderRadius: 12, backgroundColor: '#E2E8F0' },
   // Reviews
