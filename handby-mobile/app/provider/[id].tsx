@@ -26,7 +26,12 @@ const BADGE_CONFIG: Record<string, { bg: string; text: string; label: string; ic
 }
 
 export default function ProviderProfileScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>()
+  const { id, rebook, serviceId, originalRequestId } = useLocalSearchParams<{
+    id: string
+    rebook?: string
+    serviceId?: string
+    originalRequestId?: string
+  }>()
   const { user, profile: myProfile } = useAuth()
   const router = useRouter()
   const [provider, setProvider] = useState<any>(null)
@@ -38,6 +43,9 @@ export default function ProviderProfileScreen() {
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
   const [isFavourited, setIsFavourited] = useState(false)
+  const [selectedService, setSelectedService] = useState<any>(null)
+  const [urgency, setUrgency] = useState<'flexible' | 'this_week' | 'urgent'>('flexible')
+  const [preferredTime, setPreferredTime] = useState<'morning' | 'afternoon' | 'evening' | 'flexible'>('flexible')
 
   useEffect(() => {
     if (!id) return
@@ -63,6 +71,17 @@ export default function ProviderProfileScreen() {
     }
   }, [id, user])
 
+  // Pre-fill form when rebooking
+  useEffect(() => {
+    if (rebook === 'true' && serviceId && services.length > 0) {
+      const svc = services.find((s: any) => s.id === serviceId)
+      if (svc) {
+        setSelectedService(svc)
+        setMessage(`Repeat booking — previously hired for ${svc.title}`)
+      }
+    }
+  }, [rebook, serviceId, services])
+
   async function toggleFavourite() {
     if (!user || !id) return
     if (isFavourited) {
@@ -80,9 +99,12 @@ export default function ProviderProfileScreen() {
     const { error } = await supabase.from('quote_requests').insert({
       customer_id: user.id,
       provider_id: id,
-      service_id: services[0]?.id ?? null,
+      service_id: selectedService?.id ?? services[0]?.id ?? null,
       message: message.trim(),
       status: 'pending',
+      urgency,
+      preferred_time: preferredTime,
+      rebooking_of: rebook === 'true' && originalRequestId ? originalRequestId : null,
     })
     setSending(false)
     if (error) {
@@ -92,6 +114,9 @@ export default function ProviderProfileScreen() {
       if (Platform.OS === 'web') { window.alert('Your quote request has been sent.') }
       else { Alert.alert('Sent!', 'Your quote request has been sent.') }
       setMessage('')
+      setSelectedService(null)
+      setUrgency('flexible')
+      setPreferredTime('flexible')
     }
   }
 
@@ -330,10 +355,58 @@ export default function ProviderProfileScreen() {
           </View>
         )}
 
-        {/* Quote form (customers only) */}
+        {/* Structured Quote Form (customers only) */}
         {user && myProfile?.role === 'customer' && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Request a Quote</Text>
+
+            {/* Service picker */}
+            {services.length > 1 && (
+              <View style={styles.servicePicker}>
+                <Text style={styles.fieldLabel}>Select a service</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.serviceChipsScroll}>
+                  <View style={styles.serviceChips}>
+                    {services.map((s: any) => (
+                      <TouchableOpacity
+                        key={s.id}
+                        style={[
+                          styles.serviceChip,
+                          selectedService?.id === s.id && styles.serviceChipActive,
+                        ]}
+                        onPress={() => setSelectedService(s)}
+                      >
+                        <Text style={[
+                          styles.serviceChipText,
+                          selectedService?.id === s.id && styles.serviceChipTextActive,
+                        ]}>
+                          {s.title}
+                        </Text>
+                        {s.price_from != null && (
+                          <Text style={[
+                            styles.serviceChipPrice,
+                            selectedService?.id === s.id && styles.serviceChipTextActive,
+                          ]}>
+                            From £{s.price_from}
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </ScrollView>
+              </View>
+            )}
+
+            {/* Price indicator for selected service */}
+            {selectedService?.price_from != null && (
+              <View style={styles.priceIndicator}>
+                <Ionicons name="pricetag-outline" size={14} color="#1E40AF" />
+                <Text style={styles.priceIndicatorText}>
+                  From £{selectedService.price_from}{selectedService.price_type === 'hourly' ? '/hr' : ''}
+                </Text>
+              </View>
+            )}
+
+            {/* Job description */}
             <TextInput
               style={styles.quoteInput}
               placeholder="Describe what you need..."
@@ -344,6 +417,42 @@ export default function ProviderProfileScreen() {
               numberOfLines={4}
               textAlignVertical="top"
             />
+
+            {/* Preferred time */}
+            <Text style={styles.fieldLabel}>Preferred time</Text>
+            <View style={styles.optionRow}>
+              {(['morning', 'afternoon', 'evening', 'flexible'] as const).map(t => (
+                <TouchableOpacity
+                  key={t}
+                  style={[styles.optionChip, preferredTime === t && styles.optionChipActive]}
+                  onPress={() => setPreferredTime(t)}
+                >
+                  <Text style={[styles.optionText, preferredTime === t && styles.optionTextActive]}>
+                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Urgency */}
+            <Text style={styles.fieldLabel}>How urgent?</Text>
+            <View style={styles.optionRow}>
+              {([
+                { key: 'flexible' as const, label: 'Flexible', icon: 'time-outline' },
+                { key: 'this_week' as const, label: 'This Week', icon: 'calendar-outline' },
+                { key: 'urgent' as const, label: 'Urgent', icon: 'flash-outline' },
+              ]).map(u => (
+                <TouchableOpacity
+                  key={u.key}
+                  style={[styles.optionChip, urgency === u.key && styles.optionChipActive]}
+                  onPress={() => setUrgency(u.key)}
+                >
+                  <Ionicons name={u.icon as any} size={14} color={urgency === u.key ? '#FFFFFF' : '#475569'} />
+                  <Text style={[styles.optionText, urgency === u.key && styles.optionTextActive]}>{u.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
             <Button title="Send request" onPress={sendQuote} loading={sending} disabled={!message.trim()} />
           </View>
         )}
@@ -468,5 +577,92 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: '#1E40AF',
+  },
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#475569',
+    marginBottom: 8,
+    marginTop: 12,
+  },
+  servicePicker: {
+    marginBottom: 4,
+  },
+  serviceChipsScroll: {
+    marginBottom: 8,
+  },
+  serviceChips: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  serviceChip: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E0E7FF',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  serviceChipActive: {
+    backgroundColor: '#1E40AF',
+    borderColor: '#1E40AF',
+  },
+  serviceChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1E3A8A',
+  },
+  serviceChipPrice: {
+    fontSize: 11,
+    color: '#475569',
+    marginTop: 2,
+  },
+  serviceChipTextActive: {
+    color: '#FFFFFF',
+  },
+  priceIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#EFF6FF',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 8,
+  },
+  priceIndicatorText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1E40AF',
+  },
+  optionRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+  },
+  optionChip: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E0E7FF',
+    paddingVertical: 10,
+  },
+  optionChipActive: {
+    backgroundColor: '#1E40AF',
+    borderColor: '#1E40AF',
+  },
+  optionText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#475569',
+  },
+  optionTextActive: {
+    color: '#FFFFFF',
   },
 })
