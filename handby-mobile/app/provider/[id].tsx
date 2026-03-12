@@ -1,0 +1,368 @@
+import { useEffect, useState } from 'react'
+import { ScrollView, View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator, TextInput, Alert, Platform } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
+import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../lib/auth-context'
+import { Avatar } from '../../components/ui/Avatar'
+import { Button } from '../../components/ui/Button'
+
+const BADGE_CONFIG: Record<string, { bg: string; text: string; label: string; icon: string }> = {
+  top:    { bg: '#FEF3C7', text: '#D97706', label: 'Top Pro', icon: 'trophy' },
+  rising: { bg: '#DBEAFE', text: '#2563EB', label: 'Rising Pro', icon: 'trending-up' },
+}
+
+export default function ProviderProfileScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>()
+  const { user, profile: myProfile } = useAuth()
+  const router = useRouter()
+  const [provider, setProvider] = useState<any>(null)
+  const [services, setServices] = useState<any[]>([])
+  const [portfolio, setPortfolio] = useState<any[]>([])
+  const [reviews, setReviews] = useState<any[]>([])
+  const [credentials, setCredentials] = useState<any[]>([])
+  const [message, setMessage] = useState('')
+  const [sending, setSending] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [isFavourited, setIsFavourited] = useState(false)
+
+  useEffect(() => {
+    if (!id) return
+
+    Promise.all([
+      supabase.from('profiles').select('*, provider_details(*)').eq('id', id).single(),
+      supabase.from('services').select('*, categories(name)').eq('provider_id', id).eq('is_active', true),
+      supabase.from('portfolio_items').select('*').eq('provider_id', id).order('created_at', { ascending: false }).limit(9),
+      supabase.from('reviews').select('*, profiles!reviews_reviewer_id_fkey(full_name, avatar_url)').eq('provider_id', id).order('created_at', { ascending: false }),
+      supabase.from('credentials').select('*').eq('provider_id', id).eq('verified', true),
+    ]).then(([profileRes, servicesRes, portfolioRes, reviewsRes, credRes]) => {
+      setProvider(profileRes.data)
+      setServices(servicesRes.data ?? [])
+      setPortfolio(portfolioRes.data ?? [])
+      setReviews(reviewsRes.data ?? [])
+      setCredentials(credRes.data ?? [])
+      setLoading(false)
+    })
+
+    if (user) {
+      supabase.from('favourites').select('id').eq('customer_id', user.id).eq('provider_id', id).maybeSingle()
+        .then(({ data }) => setIsFavourited(!!data))
+    }
+  }, [id, user])
+
+  async function toggleFavourite() {
+    if (!user || !id) return
+    if (isFavourited) {
+      await supabase.from('favourites').delete().eq('customer_id', user.id).eq('provider_id', id)
+      setIsFavourited(false)
+    } else {
+      await supabase.from('favourites').insert({ customer_id: user.id, provider_id: id })
+      setIsFavourited(true)
+    }
+  }
+
+  async function sendQuote() {
+    if (!message.trim() || !user) return
+    setSending(true)
+    const { error } = await supabase.from('quote_requests').insert({
+      customer_id: user.id,
+      provider_id: id,
+      service_id: services[0]?.id ?? null,
+      message: message.trim(),
+      status: 'pending',
+    })
+    setSending(false)
+    if (error) {
+      if (Platform.OS === 'web') { window.alert(error.message) }
+      else { Alert.alert('Error', error.message) }
+    } else {
+      if (Platform.OS === 'web') { window.alert('Your quote request has been sent.') }
+      else { Alert.alert('Sent!', 'Your quote request has been sent.') }
+      setMessage('')
+    }
+  }
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 60 }} />
+      </SafeAreaView>
+    )
+  }
+
+  if (!provider) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <Text style={styles.errorText}>Provider not found</Text>
+      </SafeAreaView>
+    )
+  }
+
+  const details = Array.isArray(provider.provider_details)
+    ? provider.provider_details[0]
+    : provider.provider_details
+  const badgeInfo = details?.badge_level && details.badge_level !== 'new'
+    ? BADGE_CONFIG[details.badge_level]
+    : null
+  const completionCount = details?.completion_count ?? 0
+  const responseTime = details?.response_time_mins
+
+  return (
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Nav bar */}
+        <View style={styles.navBar}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="#1E3A8A" />
+          </TouchableOpacity>
+          {user && myProfile?.role === 'customer' && (
+            <TouchableOpacity onPress={toggleFavourite}>
+              <Ionicons name={isFavourited ? 'heart' : 'heart-outline'} size={24} color={isFavourited ? '#EF4444' : '#1E3A8A'} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Header */}
+        <View style={styles.headerCard}>
+          <Avatar uri={provider.avatar_url} name={provider.full_name} size={72} />
+          <View style={styles.nameRow}>
+            <Text style={styles.name}>{details?.business_name || provider.full_name}</Text>
+            {badgeInfo && (
+              <View style={[styles.proBadge, { backgroundColor: badgeInfo.bg }]}>
+                <Ionicons name={badgeInfo.icon as any} size={12} color={badgeInfo.text} />
+                <Text style={[styles.proBadgeText, { color: badgeInfo.text }]}>{badgeInfo.label}</Text>
+              </View>
+            )}
+          </View>
+          {provider.city && (
+            <View style={styles.locationRow}>
+              <Ionicons name="location-outline" size={14} color="#475569" />
+              <Text style={styles.city}>{provider.city}</Text>
+            </View>
+          )}
+
+          {/* Stats row */}
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <View style={styles.statIconWrap}>
+                <Ionicons name="star" size={16} color="#FACC15" />
+              </View>
+              <Text style={styles.statValue}>{(details?.avg_rating ?? 0).toFixed(1)}</Text>
+              <Text style={styles.statLabel}>{details?.review_count ?? 0} reviews</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <View style={styles.statIconWrap}>
+                <Ionicons name="checkmark-done" size={16} color="#2563EB" />
+              </View>
+              <Text style={styles.statValue}>{completionCount}</Text>
+              <Text style={styles.statLabel}>jobs done</Text>
+            </View>
+            {responseTime != null && (
+              <>
+                <View style={styles.statDivider} />
+                <View style={styles.statItem}>
+                  <View style={styles.statIconWrap}>
+                    <Ionicons name="flash" size={16} color="#D97706" />
+                  </View>
+                  <Text style={styles.statValue}>{responseTime < 60 ? `${responseTime}m` : `${Math.round(responseTime / 60)}h`}</Text>
+                  <Text style={styles.statLabel}>response</Text>
+                </View>
+              </>
+            )}
+            {details?.years_exp != null && (
+              <>
+                <View style={styles.statDivider} />
+                <View style={styles.statItem}>
+                  <View style={styles.statIconWrap}>
+                    <Ionicons name="calendar" size={16} color="#475569" />
+                  </View>
+                  <Text style={styles.statValue}>{details.years_exp}yr</Text>
+                  <Text style={styles.statLabel}>experience</Text>
+                </View>
+              </>
+            )}
+          </View>
+
+          {details?.is_available && (
+            <View style={styles.availBadge}>
+              <View style={styles.pulseDot} />
+              <Text style={styles.availText}>Available Now</Text>
+            </View>
+          )}
+          {provider.bio && <Text style={styles.bio}>{provider.bio}</Text>}
+        </View>
+
+        {/* Trust Badges */}
+        {credentials.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Verified Credentials</Text>
+            <View style={styles.credGrid}>
+              {credentials.map(c => {
+                const iconName =
+                  c.type === 'insurance' ? 'shield-checkmark' :
+                  c.type === 'certification' ? 'ribbon' :
+                  c.type === 'license' ? 'document-text' :
+                  'checkmark-circle'
+                return (
+                  <View key={c.id} style={styles.credCard}>
+                    <Ionicons name={iconName} size={20} color="#16A34A" />
+                    <Text style={styles.credLabel}>{c.label}</Text>
+                    <Text style={styles.credType}>
+                      {c.type.charAt(0).toUpperCase() + c.type.slice(1)}
+                    </Text>
+                    {c.expires_at && (
+                      <Text style={styles.credExpiry}>
+                        Exp: {new Date(c.expires_at).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
+                      </Text>
+                    )}
+                  </View>
+                )
+              })}
+            </View>
+          </View>
+        )}
+
+        {/* Services */}
+        {services.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Services</Text>
+            {services.map(s => (
+              <View key={s.id} style={styles.serviceCard}>
+                <View style={styles.serviceInfo}>
+                  <Text style={styles.serviceTitle}>{s.title}</Text>
+                  {s.categories?.name && <Text style={styles.serviceCategory}>{s.categories.name}</Text>}
+                </View>
+                {s.price_from != null && (
+                  <Text style={styles.servicePrice}>
+                    From £{s.price_from}{s.price_type === 'hourly' ? '/hr' : ''}
+                  </Text>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Portfolio */}
+        {portfolio.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Portfolio</Text>
+            <View style={styles.portfolioGrid}>
+              {portfolio.map(p => (
+                <Image key={p.id} source={{ uri: p.image_url }} style={styles.portfolioImg} />
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Reviews */}
+        {reviews.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Reviews</Text>
+            {reviews.map(r => (
+              <View key={r.id} style={styles.reviewCard}>
+                <View style={styles.reviewHeader}>
+                  <Avatar uri={r.profiles?.avatar_url} name={r.profiles?.full_name ?? '?'} size={36} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.reviewerName}>{r.profiles?.full_name}</Text>
+                    <View style={styles.starsRow}>
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Ionicons key={i} name={i < r.rating ? 'star' : 'star-outline'} size={14} color="#FACC15" />
+                      ))}
+                      <Text style={styles.reviewDate}>
+                        {new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+                {r.body && <Text style={styles.reviewBody}>{r.body}</Text>}
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Quote form (customers only) */}
+        {user && myProfile?.role === 'customer' && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Request a Quote</Text>
+            <TextInput
+              style={styles.quoteInput}
+              placeholder="Describe what you need..."
+              placeholderTextColor="#94A3B8"
+              value={message}
+              onChangeText={setMessage}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+            <Button title="Send request" onPress={sendQuote} loading={sending} disabled={!message.trim()} />
+          </View>
+        )}
+
+        <View style={{ height: 40 }} />
+      </ScrollView>
+    </SafeAreaView>
+  )
+}
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: '#EFF6FF' },
+  navBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
+  headerCard: {
+    backgroundColor: '#FFFFFF', borderRadius: 20, padding: 24, marginHorizontal: 16, marginTop: 8,
+    alignItems: 'center',
+    shadowColor: '#000', shadowOpacity: 0.05, shadowOffset: { width: 0, height: 2 }, shadowRadius: 10, elevation: 2,
+  },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
+  name: { fontSize: 22, fontWeight: '700', color: '#1E3A8A' },
+  proBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  proBadgeText: { fontSize: 12, fontWeight: '700' },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  city: { fontSize: 14, color: '#475569' },
+  statsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 16, gap: 4 },
+  statItem: { alignItems: 'center', paddingHorizontal: 12 },
+  statIconWrap: { marginBottom: 4 },
+  statValue: { fontSize: 18, fontWeight: '700', color: '#1E3A8A' },
+  statLabel: { fontSize: 11, color: '#475569', marginTop: 1 },
+  statDivider: { width: 1, height: 32, backgroundColor: '#E0E7FF' },
+  availBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#DCFCE7', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 6, marginTop: 12 },
+  pulseDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#16A34A' },
+  availText: { color: '#16A34A', fontWeight: '600', fontSize: 14 },
+  bio: { fontSize: 14, color: '#4B5563', marginTop: 12, textAlign: 'center', lineHeight: 20 },
+  section: { marginTop: 24, paddingHorizontal: 16 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#1E3A8A', marginBottom: 12 },
+  // Credentials
+  credGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  credCard: {
+    backgroundColor: '#F0FDF4', borderRadius: 12, padding: 12, width: '48%',
+    borderWidth: 1, borderColor: '#BBF7D0', gap: 4,
+  },
+  credLabel: { fontSize: 13, fontWeight: '600', color: '#1E3A8A' },
+  credType: { fontSize: 11, color: '#16A34A', fontWeight: '500' },
+  credExpiry: { fontSize: 10, color: '#475569' },
+  // Services
+  serviceCard: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, marginBottom: 8,
+  },
+  serviceInfo: { flex: 1 },
+  serviceTitle: { fontSize: 15, fontWeight: '600', color: '#1E3A8A' },
+  serviceCategory: { fontSize: 13, color: '#2563EB', marginTop: 2 },
+  servicePrice: { fontSize: 15, fontWeight: '700', color: '#1E3A8A' },
+  // Portfolio
+  portfolioGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  portfolioImg: { width: '31%', aspectRatio: 1, borderRadius: 12, backgroundColor: '#E2E8F0' },
+  // Reviews
+  reviewCard: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, marginBottom: 8 },
+  reviewHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  reviewerName: { fontSize: 14, fontWeight: '600', color: '#1E3A8A' },
+  starsRow: { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 2 },
+  reviewDate: { fontSize: 11, color: '#94A3B8', marginLeft: 6 },
+  reviewBody: { fontSize: 14, color: '#4B5563', marginTop: 10, lineHeight: 20 },
+  quoteInput: {
+    backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E0E7FF', borderRadius: 12,
+    padding: 16, fontSize: 15, color: '#1E3A8A', minHeight: 100, marginBottom: 12,
+  },
+  errorText: { fontSize: 16, color: '#EF4444', textAlign: 'center', marginTop: 60 },
+})
