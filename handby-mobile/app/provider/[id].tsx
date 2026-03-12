@@ -119,6 +119,7 @@ export default function ProviderProfileScreen() {
     : null
   const completionCount = details?.completion_count ?? 0
   const responseTime = details?.response_time_mins
+  const isVerified = details?.is_verified === true
 
   // Calculate sub-score averages from reviews that have sub-scores
   const subScoreReviews = reviews.filter(
@@ -163,6 +164,12 @@ export default function ProviderProfileScreen() {
               <View style={[styles.proBadge, { backgroundColor: badgeInfo.bg }]}>
                 <Ionicons name={badgeInfo.icon as any} size={12} color={badgeInfo.text} />
                 <Text style={[styles.proBadgeText, { color: badgeInfo.text }]}>{badgeInfo.label}</Text>
+              </View>
+            )}
+            {isVerified && (
+              <View style={styles.verifiedBadge}>
+                <Ionicons name="shield-checkmark" size={12} color="#1E40AF" />
+                <Text style={styles.verifiedText}>Verified</Text>
               </View>
             )}
           </View>
@@ -447,5 +454,19 @@ const styles = StyleSheet.create({
     color: '#1E3A8A',
     width: 28,
     textAlign: 'right',
+  },
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#DBEAFE',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  verifiedText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#1E40AF',
   },
 })
