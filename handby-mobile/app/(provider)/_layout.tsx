@@ -44,6 +44,7 @@ export default function ProviderLayout() {
       <Tabs.Screen name="quotes-list" options={{ href: null }} />
       <Tabs.Screen name="job-photos" options={{ href: null }} />
       <Tabs.Screen name="credentials" options={{ href: null }} />
+      <Tabs.Screen name="earnings" options={{ href: null }} />
     </Tabs>
   )
 }

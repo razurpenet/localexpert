@@ -122,8 +122,8 @@ export default function ProviderDashboard() {
 
   const quickActions: { icon: string; label: string; route: string }[] = [
     { icon: 'mail', label: 'Requests', route: '/(provider)/requests' },
+    { icon: 'cash-outline', label: 'Earnings', route: '/(provider)/earnings' },
     { icon: 'construct', label: 'Services', route: '/(provider)/manage-services' },
-    { icon: 'images', label: 'Photos', route: '/(provider)/photos' },
     { icon: 'shield-checkmark', label: 'Credentials', route: '/(provider)/credentials' },
   ]
 
