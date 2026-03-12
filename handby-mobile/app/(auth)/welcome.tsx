@@ -7,7 +7,7 @@ export default function WelcomeScreen() {
   const router = useRouter()
 
   return (
-    <LinearGradient colors={['#0F172A', '#1E3A5F']} style={styles.container}>
+    <LinearGradient colors={['#0F172A', '#1E3A8A']} style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}>Increase trust{'\n'}with customers.</Text>
         <Text style={styles.title}>Manage & collect{'\n'}reviews.</Text>
