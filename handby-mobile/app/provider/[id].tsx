@@ -174,7 +174,7 @@ export default function ProviderProfileScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Nav bar */}
         <View style={styles.navBar}>
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/')}>
             <Ionicons name="arrow-back" size={24} color="#1E3A8A" />
           </TouchableOpacity>
           {user && myProfile?.role === 'customer' && (
