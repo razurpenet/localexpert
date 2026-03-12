@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../lib/auth-context'
 import { supabase } from '../../lib/supabase'
 import { Avatar } from '../../components/ui/Avatar'
+import { colors, radius, shadow } from '../../lib/theme'
 
 interface ReviewItem {
   id: string
@@ -12,6 +13,43 @@ interface ReviewItem {
   body: string | null
   created_at: string
   profiles: { full_name: string; avatar_url: string | null }
+}
+
+function RatingSummary({ reviews }: { reviews: ReviewItem[] }) {
+  if (reviews.length === 0) return null
+
+  const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+  const counts = [5, 4, 3, 2, 1].map(star => ({
+    star,
+    count: reviews.filter(r => r.rating === star).length,
+  }))
+
+  return (
+    <View style={styles.summaryCard}>
+      <View style={styles.summaryTop}>
+        <View style={styles.summaryLeft}>
+          <Text style={styles.summaryAvg}>{avg.toFixed(1)}</Text>
+          <View style={styles.summaryStars}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Ionicons key={i} name={i < Math.round(avg) ? 'star' : 'star-outline'} size={18} color={colors.star} />
+            ))}
+          </View>
+          <Text style={styles.summaryCount}>{reviews.length} review{reviews.length !== 1 ? 's' : ''}</Text>
+        </View>
+        <View style={styles.summaryBars}>
+          {counts.map(({ star, count }) => (
+            <View key={star} style={styles.barRow}>
+              <Text style={styles.barLabel}>{star}</Text>
+              <View style={styles.barTrack}>
+                <View style={[styles.barFill, { width: `${(count / reviews.length) * 100}%` }]} />
+              </View>
+              <Text style={styles.barCount}>{count}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    </View>
+  )
 }
 
 export default function ReviewsScreen() {
@@ -35,10 +73,25 @@ export default function ReviewsScreen() {
 
   useEffect(() => { fetchReviews() }, [fetchReviews])
 
+  // Real-time: new reviews appear instantly
+  useEffect(() => {
+    if (!user) return
+    const channel = supabase
+      .channel('reviews-realtime')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'reviews',
+        filter: `provider_id=eq.${user.id}`,
+      }, () => { fetchReviews() })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [user, fetchReviews])
+
   if (loading) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
-        <ActivityIndicator size="large" color="#1E40AF" style={{ marginTop: 60 }} />
+        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 60 }} />
       </SafeAreaView>
     )
   }
@@ -49,7 +102,8 @@ export default function ReviewsScreen() {
       <FlatList
         data={reviews}
         keyExtractor={item => item.id}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchReviews() }} tintColor="#1E40AF" />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchReviews() }} tintColor={colors.primary} />}
+        ListHeaderComponent={<RatingSummary reviews={reviews} />}
         renderItem={({ item }) => (
           <View style={styles.card}>
             <View style={styles.cardHeader}>
@@ -58,7 +112,7 @@ export default function ReviewsScreen() {
                 <Text style={styles.reviewer}>{item.profiles?.full_name}</Text>
                 <View style={styles.stars}>
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <Ionicons key={i} name={i < item.rating ? 'star' : 'star-outline'} size={16} color="#FACC15" />
+                    <Ionicons key={i} name={i < item.rating ? 'star' : 'star-outline'} size={16} color={colors.star} />
                   ))}
                 </View>
               </View>
@@ -69,7 +123,7 @@ export default function ReviewsScreen() {
         )}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="star-outline" size={48} color="#94A3B8" />
+            <Ionicons name="star-outline" size={48} color={colors.textMuted} />
             <Text style={styles.emptyText}>No reviews yet</Text>
           </View>
         }
@@ -80,20 +134,38 @@ export default function ReviewsScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#EFF6FF' },
-  title: { fontSize: 24, fontWeight: '700', color: '#1E3A8A', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 },
+  safe: { flex: 1, backgroundColor: colors.primaryBg },
+  title: { fontSize: 24, fontWeight: '700', color: colors.textPrimary, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 },
   list: { paddingBottom: 32 },
+  summaryCard: {
+    backgroundColor: colors.surface, borderRadius: radius.lg, padding: 20,
+    marginHorizontal: 16, marginBottom: 16,
+    borderWidth: 1, borderColor: colors.border,
+    ...shadow.card,
+  },
+  summaryTop: { flexDirection: 'row', gap: 20 },
+  summaryLeft: { alignItems: 'center', justifyContent: 'center', minWidth: 80 },
+  summaryAvg: { fontSize: 36, fontWeight: '700', color: colors.textPrimary },
+  summaryStars: { flexDirection: 'row', gap: 2, marginTop: 4 },
+  summaryCount: { fontSize: 13, color: colors.textMuted, marginTop: 4 },
+  summaryBars: { flex: 1, gap: 4 },
+  barRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  barLabel: { fontSize: 12, color: colors.textBody, width: 12, textAlign: 'right' },
+  barTrack: { flex: 1, height: 8, backgroundColor: colors.border, borderRadius: 4, overflow: 'hidden' },
+  barFill: { height: 8, backgroundColor: colors.star, borderRadius: 4 },
+  barCount: { fontSize: 12, color: colors.textMuted, width: 20 },
   card: {
-    backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, marginHorizontal: 16, marginBottom: 12,
-    borderWidth: 1, borderColor: '#E0E7FF',
-    shadowColor: '#1E40AF', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 1,
+    backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16,
+    marginHorizontal: 16, marginBottom: 12,
+    borderWidth: 1, borderColor: colors.border,
+    ...shadow.card,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   headerInfo: { flex: 1 },
-  reviewer: { fontSize: 15, fontWeight: '600', color: '#1E3A8A' },
+  reviewer: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
   stars: { flexDirection: 'row', gap: 2, marginTop: 4 },
-  date: { fontSize: 12, color: '#94A3B8' },
+  date: { fontSize: 12, color: colors.textMuted },
   body: { fontSize: 14, color: '#4B5563', marginTop: 12, lineHeight: 20 },
   empty: { alignItems: 'center', marginTop: 80, gap: 12 },
-  emptyText: { fontSize: 16, color: '#94A3B8' },
+  emptyText: { fontSize: 16, color: colors.textMuted },
 })
