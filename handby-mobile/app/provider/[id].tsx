@@ -115,8 +115,8 @@ export default function ProviderProfileScreen() {
       if (Platform.OS === 'web') { window.alert(error.message) }
       else { Alert.alert('Error', error.message) }
     } else {
-      if (Platform.OS === 'web') { window.alert('Your quote request has been sent.') }
-      else { Alert.alert('Sent!', 'Your quote request has been sent.') }
+      if (Platform.OS === 'web') { window.alert('Your enquiry has been sent.') }
+      else { Alert.alert('Sent!', 'Your enquiry has been sent.') }
       setMessage('')
       setSelectedService(null)
       setUrgency('flexible')
@@ -324,7 +324,7 @@ export default function ProviderProfileScreen() {
         {/* Structured Quote Form (customers only) — prominent placement */}
         {user && myProfile?.role === 'customer' && (
           <View style={styles.quoteSection}>
-            <Text style={styles.quoteSectionTitle}>Request a Quote</Text>
+            <Text style={styles.quoteSectionTitle}>Get the Help You Need</Text>
 
             {/* Service picker */}
             {services.length > 1 && (
@@ -459,7 +459,7 @@ export default function ProviderProfileScreen() {
         {/* Reviews — limited to 3 */}
         {reviews.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Reviews</Text>
+            <Text style={styles.sectionTitle}>Latest Reviews</Text>
             {reviews.slice(0, 3).map(r => (
               <View key={r.id} style={styles.reviewCard}>
                 <View style={styles.reviewHeader}>
