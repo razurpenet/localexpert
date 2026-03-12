@@ -1,16 +1,24 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { View, Text, FlatList, TextInput, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth-context'
+import { colors, radius } from '../../lib/theme'
+import { QuoteCard } from '../../components/chat/QuoteCard'
+import { BookingCard } from '../../components/chat/BookingCard'
+import { QuoteBottomSheet } from '../../components/chat/QuoteBottomSheet'
+import { BookingBottomSheet } from '../../components/chat/BookingBottomSheet'
+import { ChatActionMenu } from '../../components/chat/ChatActionMenu'
 
 interface Message {
   id: string
   sender_id: string
   content: string
   created_at: string
+  type: 'text' | 'quote' | 'booking'
+  metadata: { quote_id?: string; appointment_id?: string } | null
 }
 
 export default function ChatScreen() {
@@ -21,7 +29,26 @@ export default function ChatScreen() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(true)
   const [request, setRequest] = useState<any>(null)
+  const [acceptedQuote, setAcceptedQuote] = useState<{ id: string; total: number } | null>(null)
+  const [showMenu, setShowMenu] = useState(false)
+  const [showQuoteSheet, setShowQuoteSheet] = useState(false)
+  const [showBookingSheet, setShowBookingSheet] = useState(false)
   const flatListRef = useRef<FlatList>(null)
+
+  const isProvider = user?.id === request?.provider_id
+
+  const fetchAcceptedQuote = useCallback(async () => {
+    if (!requestId) return
+    const { data } = await supabase
+      .from('quotes')
+      .select('id, total')
+      .eq('request_id', requestId)
+      .eq('status', 'accepted')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+    setAcceptedQuote(data ?? null)
+  }, [requestId])
 
   useEffect(() => {
     if (!requestId) return
@@ -34,31 +61,61 @@ export default function ChatScreen() {
       .single()
       .then(({ data }) => setRequest(data))
 
-    // Fetch messages
+    // Fetch messages (including type + metadata)
     supabase
       .from('messages')
       .select('*')
       .eq('request_id', requestId)
       .order('created_at', { ascending: true })
       .then(({ data }) => {
-        setMessages(data ?? [])
+        setMessages((data as unknown as Message[]) ?? [])
         setLoading(false)
       })
 
+    // Fetch accepted quote
+    fetchAcceptedQuote()
+
     // Subscribe to new messages
-    const channel = supabase
+    const msgChannel = supabase
       .channel(`chat-${requestId}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages', filter: `request_id=eq.${requestId}` },
         (payload) => {
-          setMessages(prev => [...prev, payload.new as Message])
+          setMessages(prev => {
+            if (prev.some(m => m.id === (payload.new as Message).id)) return prev
+            return [...prev, payload.new as Message]
+          })
         }
       )
       .subscribe()
 
-    return () => { supabase.removeChannel(channel) }
-  }, [requestId])
+    // Subscribe to quote status changes (for card updates + booking gate)
+    const quoteChannel = supabase
+      .channel(`chat-quotes-${requestId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'quotes', filter: `request_id=eq.${requestId}` },
+        () => { fetchAcceptedQuote() }
+      )
+      .subscribe()
+
+    // Subscribe to appointment status changes (for card updates)
+    const apptChannel = supabase
+      .channel(`chat-appts-${requestId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'appointments', filter: `request_id=eq.${requestId}` },
+        () => { /* BookingCard fetches its own data; this just ensures re-render if needed */ }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(msgChannel)
+      supabase.removeChannel(quoteChannel)
+      supabase.removeChannel(apptChannel)
+    }
+  }, [requestId, fetchAcceptedQuote])
 
   async function sendMessage() {
     if (!input.trim() || !user) return
@@ -81,14 +138,14 @@ export default function ChatScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#1E3A8A" />
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{otherName ?? 'Chat'}</Text>
         <View style={{ width: 24 }} />
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#1E40AF" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
       ) : (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <FlatList
@@ -103,6 +160,17 @@ export default function ChatScreen() {
               </View>
             }
             renderItem={({ item }) => {
+              // Quote card
+              if (item.type === 'quote' && item.metadata?.quote_id) {
+                return <QuoteCard quoteId={item.metadata.quote_id} onStatusChange={fetchAcceptedQuote} />
+              }
+
+              // Booking card
+              if (item.type === 'booking' && item.metadata?.appointment_id) {
+                return <BookingCard appointmentId={item.metadata.appointment_id} />
+              }
+
+              // Text bubble (default)
               const isMe = item.sender_id === user?.id
               return (
                 <View style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleThem]}>
@@ -119,52 +187,87 @@ export default function ChatScreen() {
 
           {/* Input bar */}
           <View style={styles.inputBar}>
+            {isProvider && (
+              <TouchableOpacity style={styles.actionBtn} onPress={() => setShowMenu(true)}>
+                <Ionicons name="add" size={24} color={colors.primary} />
+              </TouchableOpacity>
+            )}
             <TextInput
               style={styles.input}
               placeholder="Type a message..."
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={colors.textMuted}
               value={input}
               onChangeText={setInput}
               multiline
             />
             <TouchableOpacity style={styles.sendBtn} onPress={sendMessage} disabled={!input.trim()}>
-              <Ionicons name="send" size={22} color={input.trim() ? '#F97316' : '#94A3B8'} />
+              <Ionicons name="send" size={22} color={input.trim() ? colors.cta : colors.textMuted} />
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
       )}
+
+      {/* Action menu */}
+      <ChatActionMenu
+        visible={showMenu}
+        onClose={() => setShowMenu(false)}
+        onSendQuote={() => setShowQuoteSheet(true)}
+        onBookAppointment={() => setShowBookingSheet(true)}
+        canBook={!!acceptedQuote}
+      />
+
+      {/* Quote bottom sheet */}
+      <QuoteBottomSheet
+        visible={showQuoteSheet}
+        onClose={() => setShowQuoteSheet(false)}
+        requestId={requestId!}
+        customerId={request?.customer_id}
+      />
+
+      {/* Booking bottom sheet */}
+      <BookingBottomSheet
+        visible={showBookingSheet}
+        onClose={() => setShowBookingSheet(false)}
+        requestId={requestId!}
+        customerId={request?.customer_id}
+        acceptedQuote={acceptedQuote}
+      />
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#EFF6FF' },
+  safe: { flex: 1, backgroundColor: colors.primaryBg },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1, borderBottomColor: '#E0E7FF',
+    paddingHorizontal: 16, paddingVertical: 12, backgroundColor: colors.surface,
+    borderBottomWidth: 1, borderBottomColor: colors.border,
   },
-  headerTitle: { fontSize: 17, fontWeight: '600', color: '#1E3A8A' },
+  headerTitle: { fontSize: 17, fontWeight: '600', color: colors.textPrimary },
   messageList: { padding: 16, paddingBottom: 8, flexGrow: 1 },
   bubble: { maxWidth: '80%', borderRadius: 16, padding: 12, marginBottom: 8 },
-  bubbleMe: { alignSelf: 'flex-end', backgroundColor: '#1E40AF', borderBottomRightRadius: 4 },
-  bubbleThem: { alignSelf: 'flex-start', backgroundColor: '#FFFFFF', borderBottomLeftRadius: 4 },
+  bubbleMe: { alignSelf: 'flex-end', backgroundColor: colors.primary, borderBottomRightRadius: 4 },
+  bubbleThem: { alignSelf: 'flex-start', backgroundColor: colors.surface, borderBottomLeftRadius: 4 },
   bubbleText: { fontSize: 15, lineHeight: 21 },
   textMe: { color: '#FFFFFF' },
-  textThem: { color: '#1E3A8A' },
-  time: { fontSize: 11, color: '#94A3B8', marginTop: 4 },
+  textThem: { color: colors.textPrimary },
+  time: { fontSize: 11, color: colors.textMuted, marginTop: 4 },
   timeMe: { color: 'rgba(255,255,255,0.7)' },
   emptyChat: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 60 },
-  emptyChatText: { color: '#94A3B8', fontSize: 14 },
+  emptyChatText: { color: colors.textMuted, fontSize: 14 },
   inputBar: {
     flexDirection: 'row', alignItems: 'flex-end', gap: 8,
-    paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#FFFFFF',
-    borderTopWidth: 1, borderTopColor: '#E0E7FF',
+    paddingHorizontal: 16, paddingVertical: 12, backgroundColor: colors.surface,
+    borderTopWidth: 1, borderTopColor: colors.border,
+  },
+  actionBtn: {
+    width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primaryBg,
+    alignItems: 'center', justifyContent: 'center',
   },
   input: {
-    flex: 1, backgroundColor: '#E0E7FF', borderRadius: 20,
+    flex: 1, backgroundColor: colors.primaryBg, borderRadius: 20,
     paddingHorizontal: 16, paddingVertical: 10, fontSize: 15,
-    color: '#1E3A8A', maxHeight: 100,
+    color: colors.textPrimary, maxHeight: 100,
   },
   sendBtn: { padding: 8 },
 })
