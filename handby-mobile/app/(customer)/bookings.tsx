@@ -14,6 +14,7 @@ type JobStatus = 'pending' | 'accepted' | 'declined' | 'confirmed' | 'en_route' 
 interface Booking {
   id: string
   provider_id: string
+  service_id: string | null
   message: string
   status: JobStatus
   created_at: string
@@ -21,6 +22,7 @@ interface Booking {
   en_route_at: string | null
   started_at: string | null
   completed_at: string | null
+  quoted_price: number | null
   profiles: { full_name: string; avatar_url: string | null }
   services: { title: string } | null
 }
@@ -92,7 +94,7 @@ export default function BookingsScreen() {
     const [bookingsRes, reviewsRes] = await Promise.all([
       supabase
         .from('quote_requests')
-        .select('id, provider_id, message, status, created_at, confirmed_at, en_route_at, started_at, completed_at, profiles!quote_requests_provider_id_fkey(full_name, avatar_url), services(title)')
+        .select('id, provider_id, service_id, message, status, created_at, confirmed_at, en_route_at, started_at, completed_at, quoted_price, profiles!quote_requests_provider_id_fkey(full_name, avatar_url), services(title)')
         .eq('customer_id', user.id)
         .order('created_at', { ascending: false }),
       supabase
@@ -224,6 +226,14 @@ export default function BookingsScreen() {
               {/* Message preview */}
               <Text style={styles.message} numberOfLines={2}>{item.message}</Text>
 
+              {/* Quoted price */}
+              {item.quoted_price != null && (
+                <View style={styles.quotedPriceRow}>
+                  <Ionicons name="pricetag" size={13} color="#1E40AF" />
+                  <Text style={styles.quotedPriceText}>Quoted: £{item.quoted_price.toFixed(2)}</Text>
+                </View>
+              )}
+
               {/* Timeline tracker for active jobs */}
               {showTimeline && (
                 <View style={styles.timeline}>
@@ -262,7 +272,7 @@ export default function BookingsScreen() {
                 </View>
               )}
 
-              {/* Completed footer with review button */}
+              {/* Completed footer with review + book again buttons */}
               {item.status === 'completed' && (
                 <View style={styles.completedFooter}>
                   <View style={styles.completedRow}>
@@ -271,27 +281,49 @@ export default function BookingsScreen() {
                       Completed {item.completed_at ? new Date(item.completed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
                     </Text>
                   </View>
-                  {reviewedIds.has(item.id) ? (
-                    <View style={styles.reviewedBadge}>
-                      <Ionicons name="star" size={12} color="#D97706" />
-                      <Text style={styles.reviewedText}>Reviewed</Text>
-                    </View>
-                  ) : (
+                  <View style={styles.completedActions}>
+                    {/* Book Again */}
                     <TouchableOpacity
-                      style={styles.reviewBtn}
+                      style={styles.bookAgainBtn}
                       onPress={(e) => {
                         e.stopPropagation?.()
-                        setReviewTarget({
-                          requestId: item.id,
-                          providerId: item.provider_id,
-                          providerName: item.profiles?.full_name ?? 'this provider',
+                        router.push({
+                          pathname: `/provider/${item.provider_id}`,
+                          params: {
+                            rebook: 'true',
+                            serviceId: item.service_id ?? '',
+                            originalRequestId: item.id,
+                          },
                         })
                       }}
                     >
-                      <Ionicons name="star-outline" size={14} color="#1E40AF" />
-                      <Text style={styles.reviewBtnText}>Leave Review</Text>
+                      <Ionicons name="refresh" size={14} color="#F97316" />
+                      <Text style={styles.bookAgainText}>Book Again</Text>
                     </TouchableOpacity>
-                  )}
+
+                    {/* Review button */}
+                    {reviewedIds.has(item.id) ? (
+                      <View style={styles.reviewedBadge}>
+                        <Ionicons name="star" size={12} color="#D97706" />
+                        <Text style={styles.reviewedText}>Reviewed</Text>
+                      </View>
+                    ) : (
+                      <TouchableOpacity
+                        style={styles.reviewBtn}
+                        onPress={(e) => {
+                          e.stopPropagation?.()
+                          setReviewTarget({
+                            requestId: item.id,
+                            providerId: item.provider_id,
+                            providerName: item.profiles?.full_name ?? 'this provider',
+                          })
+                        }}
+                      >
+                        <Ionicons name="star-outline" size={14} color="#1E40AF" />
+                        <Text style={styles.reviewBtnText}>Leave Review</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 </View>
               )}
             </TouchableOpacity>
@@ -377,6 +409,40 @@ const styles = StyleSheet.create({
   reviewBtnText: { fontSize: 13, fontWeight: '600', color: '#1E40AF' },
   reviewedBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#FEF3C7', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   reviewedText: { fontSize: 12, fontWeight: '600', color: '#D97706' },
+  quotedPriceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 8,
+    backgroundColor: '#EFF6FF',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    alignSelf: 'flex-start',
+  },
+  quotedPriceText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1E40AF',
+  },
+  completedActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  bookAgainBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FFF7ED',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  bookAgainText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#F97316',
+  },
   empty: { alignItems: 'center', marginTop: 80, gap: 8 },
   emptyText: { fontSize: 18, fontWeight: '600', color: '#475569' },
   emptySubtext: { fontSize: 14, color: '#94A3B8' },
