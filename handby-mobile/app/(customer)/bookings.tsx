@@ -214,7 +214,7 @@ export default function BookingsScreen() {
                 </View>
                 <View style={{ alignItems: 'flex-end', gap: 4 }}>
                   <View style={[styles.statusBadge, { backgroundColor: config.bg }]}>
-                    <Ionicons name={config.icon as any} size={12} color={config.text} />
+                    <View style={[styles.statusDot, { backgroundColor: config.text }]} />
                     <Text style={[styles.statusText, { color: config.text }]}>{config.label}</Text>
                   </View>
                   <Text style={styles.dateText}>{formatDate(item.created_at)}</Text>
@@ -349,7 +349,8 @@ const styles = StyleSheet.create({
   providerName: { fontSize: 16, fontWeight: '600', color: '#1E3A8A' },
   service: { fontSize: 13, color: '#1E40AF', marginTop: 2 },
   message: { fontSize: 13, color: '#475569', marginTop: 10 },
-  statusBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 9999, paddingHorizontal: 10, paddingVertical: 4 },
+  statusDot: { width: 6, height: 6, borderRadius: 3 },
   statusText: { fontSize: 11, fontWeight: '600' },
   dateText: { fontSize: 11, color: '#94A3B8' },
   timeline: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: '#E0E7FF' },

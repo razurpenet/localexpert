@@ -186,7 +186,7 @@ export default function RequestsScreen() {
             <TouchableOpacity style={styles.card} onPress={() => router.push(`/chat/${item.id}`)}>
               {/* Status indicator strip */}
               <View style={[styles.statusStrip, { backgroundColor: config.bg }]}>
-                <Ionicons name={config.icon as any} size={14} color={config.text} />
+                <View style={[styles.statusDot, { backgroundColor: config.text }]} />
                 <Text style={[styles.statusStripText, { color: config.text }]}>{config.label}</Text>
               </View>
 
@@ -252,7 +252,8 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#E0E7FF',
     shadowColor: '#1E40AF', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 1,
   },
-  statusStrip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 8 },
+  statusStrip: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 9999, paddingHorizontal: 16, paddingVertical: 8 },
+  statusDot: { width: 6, height: 6, borderRadius: 3 },
   statusStripText: { fontSize: 12, fontWeight: '700' },
   cardRow: { flexDirection: 'row', gap: 12, padding: 16, paddingTop: 12 },
   cardInfo: { flex: 1 },
