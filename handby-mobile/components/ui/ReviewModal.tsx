@@ -181,13 +181,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   submitBtn: {
-    backgroundColor: '#1E40AF',
+    backgroundColor: '#F97316',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
   },
   submitBtnDisabled: {
-    backgroundColor: '#DBEAFE',
+    backgroundColor: '#FDBA74',
   },
   submitText: {
     fontSize: 16,

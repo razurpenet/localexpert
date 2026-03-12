@@ -128,7 +128,7 @@ export default function ChatScreen() {
               multiline
             />
             <TouchableOpacity style={styles.sendBtn} onPress={sendMessage} disabled={!input.trim()}>
-              <Ionicons name="send" size={22} color={input.trim() ? '#1E40AF' : '#94A3B8'} />
+              <Ionicons name="send" size={22} color={input.trim() ? '#F97316' : '#94A3B8'} />
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>

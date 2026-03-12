@@ -39,11 +39,11 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; icon: string; la
 // The next action the provider can take for each status
 const NEXT_ACTIONS: Record<string, { status: JobStatus; label: string; icon: string; bg: string; text: string; timestampField?: string }[]> = {
   pending:     [
-    { status: 'accepted', label: 'Accept', icon: 'checkmark', bg: '#DCFCE7', text: '#16A34A' },
+    { status: 'accepted', label: 'Accept', icon: 'checkmark', bg: '#F97316', text: '#FFFFFF' },
     { status: 'declined', label: 'Decline', icon: 'close', bg: '#FEE2E2', text: '#DC2626' },
   ],
   accepted:    [
-    { status: 'confirmed', label: 'Confirm Job', icon: 'calendar', bg: '#DBEAFE', text: '#1E40AF', timestampField: 'confirmed_at' },
+    { status: 'confirmed', label: 'Confirm Job', icon: 'calendar', bg: '#F97316', text: '#FFFFFF', timestampField: 'confirmed_at' },
   ],
   confirmed:   [
     { status: 'en_route', label: 'On My Way', icon: 'navigate', bg: '#E0E7FF', text: '#4F46E5', timestampField: 'en_route_at' },

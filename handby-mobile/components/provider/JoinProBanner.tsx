@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 17, fontWeight: '700', color: '#1E3A8A' },
   subtitle: { fontSize: 14, color: '#475569', textAlign: 'center', marginTop: 4, marginBottom: 16 },
   button: {
-    backgroundColor: '#1E40AF', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12,
+    backgroundColor: '#F97316', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12,
   },
   buttonText: { color: '#FFFFFF', fontWeight: '600', fontSize: 15 },
 })
