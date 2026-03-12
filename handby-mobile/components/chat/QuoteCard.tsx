@@ -7,6 +7,7 @@ import { colors, radius, shadow } from '../../lib/theme'
 
 interface QuoteData {
   id: string
+  request_id: string
   items: { description: string; amount: number }[]
   subtotal: number
   vat_rate: number | null
@@ -55,6 +56,9 @@ export function QuoteCard({ quoteId, onStatusChange }: { quoteId: string; onStat
   async function updateStatus(status: 'accepted' | 'rejected') {
     setActing(true)
     await supabase.from('quotes').update({ status }).eq('id', quoteId)
+    if (status === 'accepted' && quote?.request_id) {
+      await supabase.from('quote_requests').update({ status: 'confirmed', confirmed_at: new Date().toISOString() }).eq('id', quote.request_id)
+    }
     setQuote(prev => prev ? { ...prev, status } : null)
     setActing(false)
     onStatusChange?.()
