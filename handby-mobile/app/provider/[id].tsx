@@ -321,69 +321,10 @@ export default function ProviderProfileScreen() {
           </View>
         )}
 
-        {/* Portfolio */}
-        {portfolio.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Portfolio</Text>
-            {albums.length > 0 && (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.albumFilterBar}>
-                <View style={styles.albumFilterRow}>
-                  <TouchableOpacity
-                    style={[styles.albumFilterChip, activeAlbumFilter === null && styles.albumFilterChipActive]}
-                    onPress={() => setActiveAlbumFilter(null)}
-                  >
-                    <Text style={[styles.albumFilterText, activeAlbumFilter === null && styles.albumFilterTextActive]}>All</Text>
-                  </TouchableOpacity>
-                  {albums.map(name => (
-                    <TouchableOpacity
-                      key={name}
-                      style={[styles.albumFilterChip, activeAlbumFilter === name && styles.albumFilterChipActive]}
-                      onPress={() => setActiveAlbumFilter(name)}
-                    >
-                      <Text style={[styles.albumFilterText, activeAlbumFilter === name && styles.albumFilterTextActive]}>{name}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </ScrollView>
-            )}
-            <View style={styles.portfolioGrid}>
-              {(activeAlbumFilter ? portfolio.filter((p: any) => p.album === activeAlbumFilter) : portfolio).map((p: any) => (
-                <Image key={p.id} source={{ uri: p.image_url }} style={styles.portfolioImg} />
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* Reviews */}
-        {reviews.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Reviews</Text>
-            {reviews.map(r => (
-              <View key={r.id} style={styles.reviewCard}>
-                <View style={styles.reviewHeader}>
-                  <Avatar uri={r.profiles?.avatar_url} name={r.profiles?.full_name ?? '?'} size={36} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.reviewerName}>{r.profiles?.full_name}</Text>
-                    <View style={styles.starsRow}>
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Ionicons key={i} name={i < r.rating ? 'star' : 'star-outline'} size={14} color="#FACC15" />
-                      ))}
-                      <Text style={styles.reviewDate}>
-                        {new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-                {r.body && <Text style={styles.reviewBody}>{r.body}</Text>}
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* Structured Quote Form (customers only) */}
+        {/* Structured Quote Form (customers only) — prominent placement */}
         {user && myProfile?.role === 'customer' && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Request a Quote</Text>
+          <View style={styles.quoteSection}>
+            <Text style={styles.quoteSectionTitle}>Request a Quote</Text>
 
             {/* Service picker */}
             {services.length > 1 && (
@@ -482,6 +423,65 @@ export default function ProviderProfileScreen() {
           </View>
         )}
 
+        {/* Portfolio — limited to 6 photos */}
+        {portfolio.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Portfolio</Text>
+            {albums.length > 0 && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.albumFilterBar}>
+                <View style={styles.albumFilterRow}>
+                  <TouchableOpacity
+                    style={[styles.albumFilterChip, activeAlbumFilter === null && styles.albumFilterChipActive]}
+                    onPress={() => setActiveAlbumFilter(null)}
+                  >
+                    <Text style={[styles.albumFilterText, activeAlbumFilter === null && styles.albumFilterTextActive]}>All</Text>
+                  </TouchableOpacity>
+                  {albums.map(name => (
+                    <TouchableOpacity
+                      key={name}
+                      style={[styles.albumFilterChip, activeAlbumFilter === name && styles.albumFilterChipActive]}
+                      onPress={() => setActiveAlbumFilter(name)}
+                    >
+                      <Text style={[styles.albumFilterText, activeAlbumFilter === name && styles.albumFilterTextActive]}>{name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+            )}
+            <View style={styles.portfolioGrid}>
+              {(activeAlbumFilter ? portfolio.filter((p: any) => p.album === activeAlbumFilter) : portfolio).slice(0, 6).map((p: any) => (
+                <Image key={p.id} source={{ uri: p.image_url }} style={styles.portfolioImg} />
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Reviews — limited to 3 */}
+        {reviews.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Reviews</Text>
+            {reviews.slice(0, 3).map(r => (
+              <View key={r.id} style={styles.reviewCard}>
+                <View style={styles.reviewHeader}>
+                  <Avatar uri={r.profiles?.avatar_url} name={r.profiles?.full_name ?? '?'} size={36} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.reviewerName}>{r.profiles?.full_name}</Text>
+                    <View style={styles.starsRow}>
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Ionicons key={i} name={i < r.rating ? 'star' : 'star-outline'} size={14} color="#FACC15" />
+                      ))}
+                      <Text style={styles.reviewDate}>
+                        {new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+                {r.body && <Text style={styles.reviewBody}>{r.body}</Text>}
+              </View>
+            ))}
+          </View>
+        )}
+
         <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
@@ -514,6 +514,13 @@ const styles = StyleSheet.create({
   bio: { fontSize: 14, color: '#4B5563', marginTop: 12, textAlign: 'center', lineHeight: 20 },
   section: { marginTop: 24, paddingHorizontal: 16 },
   sectionTitle: { fontSize: 18, fontWeight: '700', color: '#1E3A8A', marginBottom: 12 },
+  quoteSection: {
+    marginTop: 24, marginHorizontal: 16, padding: 20,
+    backgroundColor: '#FFFFFF', borderRadius: 20,
+    borderWidth: 2, borderColor: '#1E40AF',
+    shadowColor: '#1E40AF', shadowOpacity: 0.1, shadowOffset: { width: 0, height: 4 }, shadowRadius: 12, elevation: 3,
+  },
+  quoteSectionTitle: { fontSize: 20, fontWeight: '700', color: '#1E3A8A', marginBottom: 16 },
   // Credentials
   credGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   credCard: {
