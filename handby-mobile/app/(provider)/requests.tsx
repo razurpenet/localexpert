@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Platform, Alert } from 'react-native'
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Platform, Alert, Modal, TextInput, KeyboardAvoidingView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -21,8 +21,13 @@ interface Request {
   en_route_at: string | null
   started_at: string | null
   completed_at: string | null
+  urgency: string | null
+  preferred_time: string | null
+  preferred_date: string | null
+  quoted_price: number | null
+  rebooking_of: string | null
   profiles: { full_name: string; avatar_url: string | null }
-  services: { title: string } | null
+  services: { title: string; price_from: number | null } | null
 }
 
 const STATUS_CONFIG: Record<string, { bg: string; text: string; icon: string; label: string }> = {
@@ -39,7 +44,7 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; icon: string; la
 // The next action the provider can take for each status
 const NEXT_ACTIONS: Record<string, { status: JobStatus; label: string; icon: string; bg: string; text: string; timestampField?: string }[]> = {
   pending:     [
-    { status: 'accepted', label: 'Accept', icon: 'checkmark', bg: '#F97316', text: '#FFFFFF' },
+    { status: 'accepted', label: 'Accept & Quote', icon: 'pricetag', bg: '#F97316', text: '#FFFFFF' },
     { status: 'declined', label: 'Decline', icon: 'close', bg: '#FEE2E2', text: '#DC2626' },
   ],
   accepted:    [
@@ -66,12 +71,16 @@ export default function RequestsScreen() {
   const [requests, setRequests] = useState<Request[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<Tab>('Active')
+  const [priceModal, setPriceModal] = useState<{ visible: boolean; requestId: string; serviceTitle: string; priceFrom: number | null }>({
+    visible: false, requestId: '', serviceTitle: '', priceFrom: null,
+  })
+  const [quotePrice, setQuotePrice] = useState('')
 
   const fetchRequests = useCallback(async () => {
     if (!user) return
     const { data } = await supabase
       .from('quote_requests')
-      .select('id, message, status, created_at, confirmed_at, en_route_at, started_at, completed_at, profiles!quote_requests_customer_id_fkey(full_name, avatar_url), services(title)')
+      .select('id, message, status, created_at, confirmed_at, en_route_at, started_at, completed_at, urgency, preferred_time, preferred_date, quoted_price, rebooking_of, profiles!quote_requests_customer_id_fkey(full_name, avatar_url), services(title, price_from)')
       .eq('provider_id', user.id)
       .order('created_at', { ascending: false })
 
@@ -124,6 +133,40 @@ export default function RequestsScreen() {
       return
     }
 
+    fetchRequests()
+  }
+
+  async function acceptWithPrice() {
+    const price = parseFloat(quotePrice)
+    if (isNaN(price) || price <= 0) {
+      const msg = 'Please enter a valid price.'
+      if (Platform.OS === 'web') window.alert(msg)
+      else Alert.alert('Invalid price', msg)
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('quote_requests')
+      .update({ status: 'accepted', quoted_price: price })
+      .eq('id', priceModal.requestId)
+      .select()
+
+    if (error) {
+      const msg = `Update failed: ${error.message}`
+      if (Platform.OS === 'web') window.alert(msg)
+      else Alert.alert('Error', msg)
+      return
+    }
+
+    if (!data || data.length === 0) {
+      const msg = 'Update had no effect — you may not have permission.'
+      if (Platform.OS === 'web') window.alert(msg)
+      else Alert.alert('Error', msg)
+      return
+    }
+
+    setPriceModal({ visible: false, requestId: '', serviceTitle: '', priceFrom: null })
+    setQuotePrice('')
     fetchRequests()
   }
 
@@ -190,6 +233,14 @@ export default function RequestsScreen() {
                 <Text style={[styles.statusStripText, { color: config.text }]}>{config.label}</Text>
               </View>
 
+              {/* Repeat Customer badge */}
+              {item.rebooking_of && (
+                <View style={styles.repeatBadge}>
+                  <Ionicons name="refresh-circle" size={14} color="#16A34A" />
+                  <Text style={styles.repeatText}>Repeat Customer</Text>
+                </View>
+              )}
+
               <View style={styles.cardRow}>
                 <Avatar uri={item.profiles?.avatar_url ?? null} name={item.profiles?.full_name ?? '?'} size={44} />
                 <View style={styles.cardInfo}>
@@ -199,6 +250,30 @@ export default function RequestsScreen() {
                   <Text style={styles.cardDate}>
                     {new Date(item.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                   </Text>
+                  {/* Structured request info */}
+                  {(item.urgency && item.urgency !== 'flexible' || item.preferred_time && item.preferred_time !== 'flexible') && (
+                    <View style={styles.requestMeta}>
+                      {item.urgency === 'urgent' && (
+                        <View style={styles.urgentChip}>
+                          <Ionicons name="flash" size={10} color="#DC2626" />
+                          <Text style={styles.urgentText}>Urgent</Text>
+                        </View>
+                      )}
+                      {item.urgency === 'this_week' && (
+                        <View style={styles.thisWeekChip}>
+                          <Ionicons name="calendar" size={10} color="#D97706" />
+                          <Text style={styles.thisWeekText}>This Week</Text>
+                        </View>
+                      )}
+                      {item.preferred_time && item.preferred_time !== 'flexible' && (
+                        <Text style={styles.metaText}>{item.preferred_time.charAt(0).toUpperCase() + item.preferred_time.slice(1)}</Text>
+                      )}
+                    </View>
+                  )}
+                  {/* Show quoted price if accepted */}
+                  {item.quoted_price != null && (
+                    <Text style={styles.quotedPrice}>Quoted: £{item.quoted_price.toFixed(2)}</Text>
+                  )}
                 </View>
                 <TouchableOpacity style={styles.chatBtn} onPress={() => router.push(`/chat/${item.id}`)}>
                   <Ionicons name="chatbubble-outline" size={20} color="#1E40AF" />
@@ -212,7 +287,18 @@ export default function RequestsScreen() {
                     <TouchableOpacity
                       key={action.status}
                       style={[styles.actionBtn, { backgroundColor: action.bg }]}
-                      onPress={() => confirmAction(item.id, action.status, action.label, action.timestampField)}
+                      onPress={() => {
+                        if (action.status === 'accepted') {
+                          setPriceModal({
+                            visible: true,
+                            requestId: item.id,
+                            serviceTitle: item.services?.title ?? 'Service',
+                            priceFrom: item.services?.price_from ?? null,
+                          })
+                        } else {
+                          confirmAction(item.id, action.status, action.label, action.timestampField)
+                        }
+                      }}
                     >
                       <Ionicons name={action.icon as any} size={16} color={action.text} />
                       <Text style={[styles.actionText, { color: action.text }]}>{action.label}</Text>
@@ -231,6 +317,43 @@ export default function RequestsScreen() {
         }
         contentContainerStyle={styles.list}
       />
+
+      {/* Accept with Price Modal */}
+      <Modal visible={priceModal.visible} transparent animationType="slide" onRequestClose={() => setPriceModal(p => ({ ...p, visible: false }))}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Quote a Price</Text>
+              <TouchableOpacity onPress={() => { setPriceModal(p => ({ ...p, visible: false })); setQuotePrice('') }}>
+                <Ionicons name="close" size={24} color="#475569" />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.modalSubtitle}>{priceModal.serviceTitle}</Text>
+            {priceModal.priceFrom != null && (
+              <Text style={styles.modalRef}>Reference: From £{priceModal.priceFrom}</Text>
+            )}
+            <View style={styles.priceInputRow}>
+              <Text style={styles.priceCurrency}>£</Text>
+              <TextInput
+                style={styles.priceInput}
+                placeholder="0.00"
+                placeholderTextColor="#94A3B8"
+                value={quotePrice}
+                onChangeText={setQuotePrice}
+                keyboardType="decimal-pad"
+                autoFocus
+              />
+            </View>
+            <TouchableOpacity
+              style={[styles.modalSubmit, !quotePrice && styles.modalSubmitDisabled]}
+              onPress={acceptWithPrice}
+              disabled={!quotePrice}
+            >
+              <Text style={styles.modalSubmitText}>Accept & Send Quote</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   )
 }
@@ -267,4 +390,34 @@ const styles = StyleSheet.create({
   actionText: { fontSize: 14, fontWeight: '600' },
   empty: { alignItems: 'center', marginTop: 60, gap: 8 },
   emptyText: { fontSize: 16, color: '#94A3B8' },
+  repeatBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: '#DCFCE7', paddingHorizontal: 12, paddingVertical: 6,
+  },
+  repeatText: { fontSize: 12, fontWeight: '600', color: '#16A34A' },
+  requestMeta: { flexDirection: 'row', gap: 6, marginTop: 4 },
+  urgentChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    backgroundColor: '#FEE2E2', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2,
+  },
+  urgentText: { fontSize: 10, fontWeight: '600', color: '#DC2626' },
+  thisWeekChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    backgroundColor: '#FEF3C7', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2,
+  },
+  thisWeekText: { fontSize: 10, fontWeight: '600', color: '#D97706' },
+  metaText: { fontSize: 11, color: '#475569' },
+  quotedPrice: { fontSize: 14, fontWeight: '700', color: '#1E3A8A', marginTop: 4 },
+  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' },
+  modalSheet: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  modalTitle: { fontSize: 20, fontWeight: '700', color: '#1E3A8A' },
+  modalSubtitle: { fontSize: 14, color: '#475569', marginBottom: 4 },
+  modalRef: { fontSize: 13, color: '#1E40AF', marginBottom: 16 },
+  priceInputRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#EFF6FF', borderRadius: 12, borderWidth: 1, borderColor: '#E0E7FF', paddingHorizontal: 16, marginBottom: 20 },
+  priceCurrency: { fontSize: 24, fontWeight: '700', color: '#1E3A8A' },
+  priceInput: { flex: 1, fontSize: 24, fontWeight: '700', color: '#1E3A8A', paddingVertical: 16, marginLeft: 8 },
+  modalSubmit: { backgroundColor: '#F97316', borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  modalSubmitDisabled: { backgroundColor: '#FDBA74' },
+  modalSubmitText: { fontSize: 16, fontWeight: '600', color: '#FFFFFF' },
 })
