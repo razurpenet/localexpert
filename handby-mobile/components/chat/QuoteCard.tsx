@@ -35,6 +35,21 @@ export function QuoteCard({ quoteId, onStatusChange }: { quoteId: string; onStat
   useEffect(() => {
     supabase.from('quotes').select('*').eq('id', quoteId).single()
       .then(({ data }) => { setQuote(data as QuoteData); setLoading(false) })
+
+    // Subscribe to status changes so the other party sees updates in real-time
+    const channel = supabase
+      .channel(`quote-${quoteId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'quotes', filter: `id=eq.${quoteId}` },
+        (payload) => {
+          setQuote(prev => prev ? { ...prev, ...(payload.new as QuoteData) } : null)
+          onStatusChange?.()
+        }
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }, [quoteId])
 
   async function updateStatus(status: 'accepted' | 'rejected') {

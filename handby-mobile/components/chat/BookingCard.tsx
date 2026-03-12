@@ -34,6 +34,21 @@ export function BookingCard({ appointmentId, onStatusChange }: { appointmentId: 
   useEffect(() => {
     supabase.from('appointments').select('*, quotes(total)').eq('id', appointmentId).single()
       .then(({ data }) => { setAppt(data as unknown as AppointmentData); setLoading(false) })
+
+    // Subscribe to status changes so the other party sees updates in real-time
+    const channel = supabase
+      .channel(`appt-${appointmentId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'appointments', filter: `id=eq.${appointmentId}` },
+        (payload) => {
+          setAppt(prev => prev ? { ...prev, status: (payload.new as any).status } : null)
+          onStatusChange?.()
+        }
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }, [appointmentId])
 
   async function confirm() {
