@@ -13,6 +13,8 @@ interface Props {
 export function OnboardingChecklist({ items }: Props) {
   const completed = items.filter(i => i.done).length
 
+  if (completed === items.length) return null
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Show customers you're the right choice</Text>
