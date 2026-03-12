@@ -288,13 +288,14 @@ export default function BookingsScreen() {
                       onPress={(e) => {
                         e.stopPropagation?.()
                         router.push({
-                          pathname: `/provider/${item.provider_id}`,
+                          pathname: `/provider/[id]`,
                           params: {
+                            id: item.provider_id,
                             rebook: 'true',
                             serviceId: item.service_id ?? '',
                             originalRequestId: item.id,
                           },
-                        })
+                        } as any)
                       }}
                     >
                       <Ionicons name="refresh" size={14} color="#F97316" />
