@@ -23,7 +23,7 @@ interface Props {
 
 const BADGE_CONFIG: Record<string, { bg: string; text: string; label: string }> = {
   top:    { bg: '#FEF3C7', text: '#D97706', label: 'Top Pro' },
-  rising: { bg: '#DBEAFE', text: '#2563EB', label: 'Rising' },
+  rising: { bg: '#DBEAFE', text: '#1E40AF', label: 'Rising' },
   new:    { bg: '#E0E7FF', text: '#475569', label: 'New' },
 }
 
@@ -128,7 +128,7 @@ export function ProviderResultCard(props: Props) {
           ))}
           {responseLabel && (
             <View style={styles.responseTimeBadge}>
-              <Ionicons name="flash-outline" size={11} color="#2563EB" />
+              <Ionicons name="flash-outline" size={11} color="#1E40AF" />
               <Text style={styles.responseTimeText}>{responseLabel}</Text>
             </View>
           )}
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   name: { fontSize: 16, fontWeight: '600', color: '#1E3A8A', flexShrink: 1 },
   proBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
   proBadgeText: { fontSize: 10, fontWeight: '700' },
-  category: { fontSize: 13, color: '#2563EB', marginTop: 2 },
+  category: { fontSize: 13, color: '#1E40AF', marginTop: 2 },
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 3 },
   city: { fontSize: 13, color: '#475569' },
   statsRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 6 },
@@ -173,5 +173,5 @@ const styles = StyleSheet.create({
   trustBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#F0FDF4', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 3 },
   trustBadgeText: { fontSize: 10, fontWeight: '600', color: '#16A34A' },
   responseTimeBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#EFF6FF', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 3 },
-  responseTimeText: { fontSize: 10, fontWeight: '600', color: '#2563EB' },
+  responseTimeText: { fontSize: 10, fontWeight: '600', color: '#1E40AF' },
 })

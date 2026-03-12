@@ -5,7 +5,7 @@ export function JoinProBanner() {
   return (
     <View style={styles.container}>
       <View style={styles.iconCircle}>
-        <Ionicons name="briefcase" size={24} color="#2563EB" />
+        <Ionicons name="briefcase" size={24} color="#1E40AF" />
       </View>
       <Text style={styles.title}>Are you a professional?</Text>
       <Text style={styles.subtitle}>Create your free profile and start getting jobs today</Text>
@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 17, fontWeight: '700', color: '#1E3A8A' },
   subtitle: { fontSize: 14, color: '#475569', textAlign: 'center', marginTop: 4, marginBottom: 16 },
   button: {
-    backgroundColor: '#2563EB', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12,
+    backgroundColor: '#1E40AF', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12,
   },
   buttonText: { color: '#FFFFFF', fontWeight: '600', fontSize: 15 },
 })

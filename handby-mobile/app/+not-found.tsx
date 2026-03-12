@@ -19,5 +19,5 @@ const styles = StyleSheet.create({
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20, backgroundColor: '#EFF6FF' },
   title: { fontSize: 20, fontWeight: 'bold', color: '#1E3A8A' },
   link: { marginTop: 15, paddingVertical: 15 },
-  linkText: { fontSize: 14, color: '#2563EB' },
+  linkText: { fontSize: 14, color: '#1E40AF' },
 })

@@ -98,14 +98,14 @@ export default function CredentialsScreen() {
   }
 
   const typeColors: Record<string, { bg: string; text: string }> = {
-    certification: { bg: '#DBEAFE', text: '#2563EB' },
+    certification: { bg: '#DBEAFE', text: '#1E40AF' },
     insurance: { bg: '#DCFCE7', text: '#16A34A' },
     license: { bg: '#FEF3C7', text: '#D97706' },
     other: { bg: '#E0E7FF', text: '#475569' },
   }
 
   if (loading) {
-    return <SafeAreaView style={styles.safe} edges={['top']}><ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 60 }} /></SafeAreaView>
+    return <SafeAreaView style={styles.safe} edges={['top']}><ActivityIndicator size="large" color="#1E40AF" style={{ marginTop: 60 }} /></SafeAreaView>
   }
 
   return (
@@ -116,7 +116,7 @@ export default function CredentialsScreen() {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Credentials</Text>
         <TouchableOpacity onPress={() => setShowForm(true)}>
-          <Ionicons name="add-circle" size={28} color="#2563EB" />
+          <Ionicons name="add-circle" size={28} color="#1E40AF" />
         </TouchableOpacity>
       </View>
 
@@ -196,7 +196,7 @@ export default function CredentialsScreen() {
               <View>
                 <Text style={styles.fieldLabel}>Document</Text>
                 <TouchableOpacity style={styles.uploadBtn} onPress={pickDocument}>
-                  <Ionicons name={docUri ? 'checkmark-circle' : 'cloud-upload-outline'} size={22} color="#2563EB" />
+                  <Ionicons name={docUri ? 'checkmark-circle' : 'cloud-upload-outline'} size={22} color="#1E40AF" />
                   <Text style={styles.uploadText}>{docUri ? 'Document selected' : 'Upload document'}</Text>
                 </TouchableOpacity>
               </View>
@@ -234,10 +234,10 @@ const styles = StyleSheet.create({
   fieldLabel: { fontSize: 14, fontWeight: '500', color: '#1E3A8A', marginBottom: 6 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   pill: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E0E7FF' },
-  pillActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
+  pillActive: { backgroundColor: '#1E40AF', borderColor: '#1E40AF' },
   pillText: { fontSize: 13, fontWeight: '600', color: '#475569' },
   pillTextActive: { color: '#FFFFFF' },
   uploadBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E0E7FF', borderRadius: 12, paddingVertical: 14, paddingHorizontal: 16, borderStyle: 'dashed' },
-  uploadText: { fontSize: 15, color: '#2563EB', fontWeight: '500' },
+  uploadText: { fontSize: 15, color: '#1E40AF', fontWeight: '500' },
   formBtnWrap: { paddingHorizontal: 16, marginTop: 24 },
 })

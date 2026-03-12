@@ -28,7 +28,7 @@ interface Booking {
 const STATUS_CONFIG: Record<string, { bg: string; text: string; icon: string; label: string }> = {
   pending:     { bg: '#FEF3C7', text: '#D97706', icon: 'time-outline',         label: 'Awaiting Response' },
   accepted:    { bg: '#DCFCE7', text: '#16A34A', icon: 'checkmark-circle',     label: 'Accepted' },
-  confirmed:   { bg: '#DBEAFE', text: '#2563EB', icon: 'calendar-outline',     label: 'Confirmed' },
+  confirmed:   { bg: '#DBEAFE', text: '#1E40AF', icon: 'calendar-outline',     label: 'Confirmed' },
   en_route:    { bg: '#E0E7FF', text: '#4F46E5', icon: 'navigate-outline',     label: 'En Route' },
   in_progress: { bg: '#FEF3C7', text: '#D97706', icon: 'construct-outline',    label: 'In Progress' },
   completed:   { bg: '#DCFCE7', text: '#16A34A', icon: 'checkmark-done-circle', label: 'Completed' },
@@ -155,7 +155,7 @@ export default function BookingsScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
-        <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 60 }} />
+        <ActivityIndicator size="large" color="#1E40AF" style={{ marginTop: 60 }} />
       </SafeAreaView>
     )
   }
@@ -197,7 +197,7 @@ export default function BookingsScreen() {
       <FlatList
         data={filtered}
         keyExtractor={item => item.id}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2563EB" />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1E40AF" />}
         renderItem={({ item }) => {
           const config = STATUS_CONFIG[item.status] ?? STATUS_CONFIG.pending
           const stepIdx = getStepIndex(item.status)
@@ -288,7 +288,7 @@ export default function BookingsScreen() {
                         })
                       }}
                     >
-                      <Ionicons name="star-outline" size={14} color="#2563EB" />
+                      <Ionicons name="star-outline" size={14} color="#1E40AF" />
                       <Text style={styles.reviewBtnText}>Leave Review</Text>
                     </TouchableOpacity>
                   )}
@@ -332,10 +332,10 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8 },
   title: { fontSize: 24, fontWeight: '700', color: '#1E3A8A' },
   activeCountBadge: { backgroundColor: '#DBEAFE', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 },
-  activeCountText: { fontSize: 13, fontWeight: '600', color: '#2563EB' },
+  activeCountText: { fontSize: 13, fontWeight: '600', color: '#1E40AF' },
   tabs: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 12 },
   tab: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E0E7FF' },
-  tabActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
+  tabActive: { backgroundColor: '#1E40AF', borderColor: '#1E40AF' },
   tabText: { fontSize: 14, fontWeight: '500', color: '#475569' },
   tabTextActive: { color: '#FFFFFF' },
   list: { paddingBottom: 32 },
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
   cardHeader: { flexDirection: 'row', gap: 12 },
   cardInfo: { flex: 1 },
   providerName: { fontSize: 16, fontWeight: '600', color: '#1E3A8A' },
-  service: { fontSize: 13, color: '#2563EB', marginTop: 2 },
+  service: { fontSize: 13, color: '#1E40AF', marginTop: 2 },
   message: { fontSize: 13, color: '#475569', marginTop: 10 },
   statusBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   statusText: { fontSize: 11, fontWeight: '600' },
@@ -358,21 +358,21 @@ const styles = StyleSheet.create({
     width: 16, height: 16, borderRadius: 8, backgroundColor: '#E0E7FF',
     alignItems: 'center', justifyContent: 'center', zIndex: 1,
   },
-  timelineDotComplete: { backgroundColor: '#2563EB' },
-  timelineDotCurrent: { backgroundColor: '#2563EB', borderWidth: 2, borderColor: '#93C5FD' },
+  timelineDotComplete: { backgroundColor: '#1E40AF' },
+  timelineDotCurrent: { backgroundColor: '#1E40AF', borderWidth: 2, borderColor: '#DBEAFE' },
   timelineLine: {
     position: 'absolute', top: 7, left: 16, right: -16, height: 2, backgroundColor: '#E0E7FF',
     width: '100%',
   },
-  timelineLineComplete: { backgroundColor: '#2563EB' },
+  timelineLineComplete: { backgroundColor: '#1E40AF' },
   timelineLabel: { fontSize: 9, color: '#94A3B8', textAlign: 'center' },
-  timelineLabelComplete: { color: '#2563EB' },
-  timelineLabelCurrent: { color: '#2563EB', fontWeight: '700' },
+  timelineLabelComplete: { color: '#1E40AF' },
+  timelineLabelCurrent: { color: '#1E40AF', fontWeight: '700' },
   completedFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#E0E7FF' },
   completedRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   completedText: { fontSize: 13, color: '#16A34A', fontWeight: '500' },
   reviewBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#EFF6FF', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
-  reviewBtnText: { fontSize: 13, fontWeight: '600', color: '#2563EB' },
+  reviewBtnText: { fontSize: 13, fontWeight: '600', color: '#1E40AF' },
   reviewedBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#FEF3C7', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   reviewedText: { fontSize: 12, fontWeight: '600', color: '#D97706' },
   empty: { alignItems: 'center', marginTop: 80, gap: 8 },

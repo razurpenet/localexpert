@@ -38,7 +38,7 @@ export default function ReviewsScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
-        <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 60 }} />
+        <ActivityIndicator size="large" color="#1E40AF" style={{ marginTop: 60 }} />
       </SafeAreaView>
     )
   }
@@ -49,7 +49,7 @@ export default function ReviewsScreen() {
       <FlatList
         data={reviews}
         keyExtractor={item => item.id}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchReviews() }} tintColor="#2563EB" />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchReviews() }} tintColor="#1E40AF" />}
         renderItem={({ item }) => (
           <View style={styles.card}>
             <View style={styles.cardHeader}>

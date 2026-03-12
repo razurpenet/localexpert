@@ -63,7 +63,7 @@ export default function AppointmentsScreen() {
 
   const statusColor = (s: string) => {
     switch (s) {
-      case 'scheduled': return { bg: '#DBEAFE', text: '#2563EB' }
+      case 'scheduled': return { bg: '#DBEAFE', text: '#1E40AF' }
       case 'completed': return { bg: '#DCFCE7', text: '#16A34A' }
       case 'cancelled': return { bg: '#FEE2E2', text: '#DC2626' }
       default: return { bg: '#E0E7FF', text: '#475569' }
@@ -71,7 +71,7 @@ export default function AppointmentsScreen() {
   }
 
   if (loading) {
-    return <SafeAreaView style={styles.safe} edges={['top']}><ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 60 }} /></SafeAreaView>
+    return <SafeAreaView style={styles.safe} edges={['top']}><ActivityIndicator size="large" color="#1E40AF" style={{ marginTop: 60 }} /></SafeAreaView>
   }
 
   return (
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 20, fontWeight: '700', color: '#1E3A8A' },
   tabs: { flexDirection: 'row', paddingHorizontal: 16, gap: 8, marginBottom: 12 },
   tab: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E0E7FF' },
-  tabActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
+  tabActive: { backgroundColor: '#1E40AF', borderColor: '#1E40AF' },
   tabText: { fontSize: 13, fontWeight: '600', color: '#475569' },
   tabTextActive: { color: '#FFFFFF' },
   list: { paddingHorizontal: 16, paddingBottom: 32 },

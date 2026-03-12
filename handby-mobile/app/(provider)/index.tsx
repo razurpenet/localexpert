@@ -98,7 +98,7 @@ export default function ProviderDashboard() {
         {/* Recent requests */}
         <Text style={styles.sectionTitle}>Recent Requests</Text>
         {loading ? (
-          <ActivityIndicator size="small" color="#2563EB" style={{ marginTop: 20 }} />
+          <ActivityIndicator size="small" color="#1E40AF" style={{ marginTop: 20 }} />
         ) : requests.length === 0 ? (
           <View style={styles.empty}>
             <Text style={styles.emptyText}>No requests yet</Text>
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     flex: 1, backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, alignItems: 'center',
     shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 1,
   },
-  statNum: { fontSize: 24, fontWeight: '700', color: '#2563EB' },
+  statNum: { fontSize: 24, fontWeight: '700', color: '#1E40AF' },
   statLabel: { fontSize: 12, color: '#475569', marginTop: 4 },
   sectionTitle: { fontSize: 18, fontWeight: '700', color: '#1E3A8A', paddingHorizontal: 16, marginTop: 24, marginBottom: 12 },
   reqCard: {

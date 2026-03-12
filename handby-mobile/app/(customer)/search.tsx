@@ -183,7 +183,7 @@ export default function SearchScreen() {
         <View style={styles.categoryChip}>
           <Text style={styles.categoryChipText}>{CATEGORY_LABELS[categoryFilter] ?? categoryFilter}</Text>
           <TouchableOpacity onPress={() => setCategoryFilter(null)}>
-            <Ionicons name="close-circle" size={18} color="#2563EB" />
+            <Ionicons name="close-circle" size={18} color="#1E40AF" />
           </TouchableOpacity>
         </View>
       )}
@@ -191,7 +191,7 @@ export default function SearchScreen() {
       <FilterChips activeFilter={filter} onSelect={setFilter} />
 
       {loading ? (
-        <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color="#1E40AF" style={{ marginTop: 40 }} />
       ) : (
         <FlatList
           data={results}
@@ -250,5 +250,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#DBEAFE', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8,
     marginHorizontal: 16, marginTop: 8, alignSelf: 'flex-start',
   },
-  categoryChipText: { fontSize: 14, fontWeight: '600', color: '#2563EB' },
+  categoryChipText: { fontSize: 14, fontWeight: '600', color: '#1E40AF' },
 })

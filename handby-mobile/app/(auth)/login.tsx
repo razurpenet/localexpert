@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   form: { gap: 16 },
   errorBox: { backgroundColor: '#FEE2E2', borderWidth: 1, borderColor: '#FECACA', borderRadius: 12, padding: 12 },
   errorText: { color: '#DC2626', fontSize: 14 },
-  link: { color: '#2563EB', fontWeight: '600', fontSize: 14 },
+  link: { color: '#1E40AF', fontWeight: '600', fontSize: 14 },
   footer: { alignItems: 'center', marginTop: 32 },
   footerText: { color: '#475569', fontSize: 14 },
 })

@@ -88,7 +88,7 @@ export default function ChatScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color="#1E40AF" style={{ marginTop: 40 }} />
       ) : (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <FlatList
@@ -128,7 +128,7 @@ export default function ChatScreen() {
               multiline
             />
             <TouchableOpacity style={styles.sendBtn} onPress={sendMessage} disabled={!input.trim()}>
-              <Ionicons name="send" size={22} color={input.trim() ? '#2563EB' : '#94A3B8'} />
+              <Ionicons name="send" size={22} color={input.trim() ? '#1E40AF' : '#94A3B8'} />
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 17, fontWeight: '600', color: '#1E3A8A' },
   messageList: { padding: 16, paddingBottom: 8, flexGrow: 1 },
   bubble: { maxWidth: '80%', borderRadius: 16, padding: 12, marginBottom: 8 },
-  bubbleMe: { alignSelf: 'flex-end', backgroundColor: '#2563EB', borderBottomRightRadius: 4 },
+  bubbleMe: { alignSelf: 'flex-end', backgroundColor: '#1E40AF', borderBottomRightRadius: 4 },
   bubbleThem: { alignSelf: 'flex-start', backgroundColor: '#FFFFFF', borderBottomLeftRadius: 4 },
   bubbleText: { fontSize: 15, lineHeight: 21 },
   textMe: { color: '#FFFFFF' },

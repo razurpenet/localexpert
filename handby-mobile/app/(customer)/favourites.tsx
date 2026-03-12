@@ -59,7 +59,7 @@ export default function FavouritesScreen() {
   }
 
   if (loading) {
-    return <SafeAreaView style={styles.safe} edges={['top']}><ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 60 }} /></SafeAreaView>
+    return <SafeAreaView style={styles.safe} edges={['top']}><ActivityIndicator size="large" color="#1E40AF" style={{ marginTop: 60 }} /></SafeAreaView>
   }
 
   return (

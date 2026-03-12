@@ -72,7 +72,7 @@ export default function PhotosScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
-        <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 60 }} />
+        <ActivityIndicator size="large" color="#1E40AF" style={{ marginTop: 60 }} />
       </SafeAreaView>
     )
   }
@@ -83,10 +83,10 @@ export default function PhotosScreen() {
         <Text style={styles.title}>Portfolio</Text>
         <TouchableOpacity style={styles.addBtn} onPress={handleUpload} disabled={uploading}>
           {uploading ? (
-            <ActivityIndicator size="small" color="#2563EB" />
+            <ActivityIndicator size="small" color="#1E40AF" />
           ) : (
             <>
-              <Ionicons name="add" size={20} color="#2563EB" />
+              <Ionicons name="add" size={20} color="#1E40AF" />
               <Text style={styles.addText}>Add photo</Text>
             </>
           )}
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 24, fontWeight: '700', color: '#1E3A8A' },
   addBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  addText: { fontSize: 15, fontWeight: '600', color: '#2563EB' },
+  addText: { fontSize: 15, fontWeight: '600', color: '#1E40AF' },
   grid: { paddingHorizontal: 12, paddingBottom: 32 },
   photoWrapper: { flex: 1 / 3, aspectRatio: 1, padding: 4 },
   photo: { flex: 1, borderRadius: 12, backgroundColor: '#E2E8F0' },

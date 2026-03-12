@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
   container: { marginTop: 24, paddingHorizontal: 16 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   title: { fontSize: 18, fontWeight: '700', color: '#1E3A8A' },
-  seeAll: { fontSize: 14, color: '#2563EB', fontWeight: '600' },
+  seeAll: { fontSize: 14, color: '#1E40AF', fontWeight: '600' },
   grid: { gap: 16, paddingRight: 16 },
   item: { alignItems: 'center', width: 72 },
   iconCircle: {

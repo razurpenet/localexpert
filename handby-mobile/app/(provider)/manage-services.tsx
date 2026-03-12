@@ -138,7 +138,7 @@ export default function ManageServicesScreen() {
   }
 
   if (loading) {
-    return <SafeAreaView style={styles.safe} edges={['top']}><ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 60 }} /></SafeAreaView>
+    return <SafeAreaView style={styles.safe} edges={['top']}><ActivityIndicator size="large" color="#1E40AF" style={{ marginTop: 60 }} /></SafeAreaView>
   }
 
   return (
@@ -149,7 +149,7 @@ export default function ManageServicesScreen() {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Manage Services</Text>
         <TouchableOpacity onPress={openAdd}>
-          <Ionicons name="add-circle" size={28} color="#2563EB" />
+          <Ionicons name="add-circle" size={28} color="#1E40AF" />
         </TouchableOpacity>
       </View>
 
@@ -165,7 +165,7 @@ export default function ManageServicesScreen() {
                 <Text style={styles.cardTitle}>{item.title}</Text>
                 {item.categories?.name && <Text style={styles.cardCat}>{item.categories.name}</Text>}
               </View>
-              <Switch value={item.is_active} onValueChange={(v) => toggleActive(item.id, v)} trackColor={{ true: '#2563EB' }} />
+              <Switch value={item.is_active} onValueChange={(v) => toggleActive(item.id, v)} trackColor={{ true: '#1E40AF' }} />
             </View>
             <View style={styles.cardBottom}>
               {item.price_from != null && (
@@ -234,7 +234,7 @@ export default function ManageServicesScreen() {
 
               <View style={styles.toggleRow}>
                 <Text style={styles.fieldLabel}>Active</Text>
-                <Switch value={isActive} onValueChange={setIsActive} trackColor={{ true: '#2563EB' }} />
+                <Switch value={isActive} onValueChange={setIsActive} trackColor={{ true: '#1E40AF' }} />
               </View>
             </View>
 
@@ -264,7 +264,7 @@ export default function ManageServicesScreen() {
               <TouchableOpacity key={c.id} style={[styles.catItem, categoryId === c.id && styles.catItemActive]}
                 onPress={() => { setCategoryId(c.id); setCategoryName(c.name); setShowCatPicker(false) }}>
                 <Text style={[styles.catText, categoryId === c.id && styles.catTextActive]}>{c.name}</Text>
-                {categoryId === c.id && <Ionicons name="checkmark" size={20} color="#2563EB" />}
+                {categoryId === c.id && <Ionicons name="checkmark" size={20} color="#1E40AF" />}
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
   card: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, marginBottom: 10, shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 1 },
   cardTop: { flexDirection: 'row', alignItems: 'center' },
   cardTitle: { fontSize: 16, fontWeight: '600', color: '#1E3A8A' },
-  cardCat: { fontSize: 13, color: '#2563EB', marginTop: 2 },
+  cardCat: { fontSize: 13, color: '#1E40AF', marginTop: 2 },
   cardBottom: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8 },
   cardPrice: { fontSize: 15, fontWeight: '700', color: '#1E3A8A' },
   inactive: { fontSize: 12, color: '#94A3B8', fontStyle: 'italic' },
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
   pickerPlaceholder: { fontSize: 16, color: '#94A3B8' },
   pills: { flexDirection: 'row', gap: 8 },
   pill: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E0E7FF' },
-  pillActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
+  pillActive: { backgroundColor: '#1E40AF', borderColor: '#1E40AF' },
   pillText: { fontSize: 14, fontWeight: '600', color: '#475569' },
   pillTextActive: { color: '#FFFFFF' },
   toggleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -308,5 +308,5 @@ const styles = StyleSheet.create({
   catItem: { paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#E0E7FF', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   catItemActive: { backgroundColor: '#EFF6FF' },
   catText: { fontSize: 16, color: '#1E3A8A' },
-  catTextActive: { color: '#2563EB', fontWeight: '600' },
+  catTextActive: { color: '#1E40AF', fontWeight: '600' },
 })

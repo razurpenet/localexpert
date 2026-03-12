@@ -27,7 +27,7 @@ export function Button({ onPress, title, variant = 'primary', loading, disabled,
       activeOpacity={0.8}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? '#fff' : '#2563EB'} size="small" />
+        <ActivityIndicator color={variant === 'primary' ? '#fff' : '#1E40AF'} size="small" />
       ) : (
         <Text style={[
           styles.text,
@@ -50,12 +50,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  primary: { backgroundColor: '#2563EB' },
-  outline: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: '#2563EB' },
+  primary: { backgroundColor: '#1E40AF' },
+  outline: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: '#1E40AF' },
   ghost: { backgroundColor: 'transparent' },
   disabled: { opacity: 0.5 },
   text: { fontSize: 16, fontWeight: '600' },
   primaryText: { color: '#FFFFFF' },
-  outlineText: { color: '#2563EB' },
-  ghostText: { color: '#2563EB' },
+  outlineText: { color: '#1E40AF' },
+  ghostText: { color: '#1E40AF' },
 })

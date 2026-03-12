@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
     backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E0E7FF',
   },
-  chipActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
+  chipActive: { backgroundColor: '#1E40AF', borderColor: '#1E40AF' },
   label: { fontSize: 13, fontWeight: '500', color: '#475569' },
   labelActive: { color: '#FFFFFF' },
 })

@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 20, fontWeight: '700', color: '#1E3A8A' },
   avatarSection: { alignItems: 'center', marginBottom: 24, gap: 8 },
-  changePhoto: { fontSize: 15, fontWeight: '600', color: '#2563EB' },
+  changePhoto: { fontSize: 15, fontWeight: '600', color: '#1E40AF' },
   errorBox: { backgroundColor: '#FEE2E2', borderWidth: 1, borderColor: '#FECACA', borderRadius: 12, padding: 12, marginHorizontal: 16, marginBottom: 16 },
   errorText: { color: '#DC2626', fontSize: 14 },
   form: { gap: 16, paddingHorizontal: 16 },

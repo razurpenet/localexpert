@@ -12,7 +12,7 @@ interface StatusToastProps {
 const STATUS_MESSAGES: Record<string, { message: string; icon: string; bg: string; text: string }> = {
   accepted:    { message: 'accepted your request',    icon: 'checkmark-circle',      bg: '#DCFCE7', text: '#16A34A' },
   declined:    { message: 'declined your request',    icon: 'close-circle',          bg: '#FEE2E2', text: '#DC2626' },
-  confirmed:   { message: 'confirmed your job',       icon: 'calendar',              bg: '#DBEAFE', text: '#2563EB' },
+  confirmed:   { message: 'confirmed your job',       icon: 'calendar',              bg: '#DBEAFE', text: '#1E40AF' },
   en_route:    { message: 'is on their way',          icon: 'navigate',              bg: '#E0E7FF', text: '#4F46E5' },
   in_progress: { message: 'has started your job',     icon: 'construct',             bg: '#FEF3C7', text: '#D97706' },
   completed:   { message: 'has completed your job',   icon: 'checkmark-done-circle', bg: '#DCFCE7', text: '#16A34A' },

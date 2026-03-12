@@ -149,7 +149,7 @@ export default function ProviderEditProfileScreen() {
                 <Text style={styles.toggleLabel}>Available for work</Text>
                 <Text style={styles.toggleHint}>Show as available to customers</Text>
               </View>
-              <Switch value={isAvailable} onValueChange={setIsAvailable} trackColor={{ true: '#2563EB' }} />
+              <Switch value={isAvailable} onValueChange={setIsAvailable} trackColor={{ true: '#1E40AF' }} />
             </View>
           </View>
 
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 20, fontWeight: '700', color: '#1E3A8A' },
   avatarSection: { alignItems: 'center', marginBottom: 24, gap: 8 },
-  changePhoto: { fontSize: 15, fontWeight: '600', color: '#2563EB' },
+  changePhoto: { fontSize: 15, fontWeight: '600', color: '#1E40AF' },
   sectionTitle: { fontSize: 17, fontWeight: '700', color: '#1E3A8A', paddingHorizontal: 16, marginTop: 24, marginBottom: 12 },
   form: { gap: 16, paddingHorizontal: 16 },
   toggleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#E0E7FF' },

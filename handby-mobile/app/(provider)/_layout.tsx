@@ -5,7 +5,7 @@ export default function ProviderLayout() {
   return (
     <Tabs screenOptions={{
       headerShown: false,
-      tabBarActiveTintColor: '#2563EB',
+      tabBarActiveTintColor: '#1E40AF',
       tabBarInactiveTintColor: '#94A3B8',
       tabBarStyle: {
         backgroundColor: '#FFFFFF',

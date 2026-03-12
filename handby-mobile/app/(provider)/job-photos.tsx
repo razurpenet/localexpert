@@ -85,7 +85,7 @@ export default function JobPhotosScreen() {
   const afterPhotos = photos.filter(p => p.type === 'after')
 
   if (loading) {
-    return <SafeAreaView style={styles.safe} edges={['top']}><ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 60 }} /></SafeAreaView>
+    return <SafeAreaView style={styles.safe} edges={['top']}><ActivityIndicator size="large" color="#1E40AF" style={{ marginTop: 60 }} /></SafeAreaView>
   }
 
   return (
@@ -144,9 +144,9 @@ function PhotoSection({ title, photos, onUpload, onDelete, uploading }: {
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{title}</Text>
         <TouchableOpacity onPress={onUpload} disabled={uploading}>
-          {uploading ? <ActivityIndicator size="small" color="#2563EB" /> : (
+          {uploading ? <ActivityIndicator size="small" color="#1E40AF" /> : (
             <View style={styles.addBtn}>
-              <Ionicons name="add" size={16} color="#2563EB" />
+              <Ionicons name="add" size={16} color="#1E40AF" />
               <Text style={styles.addText}>Add</Text>
             </View>
           )}
@@ -173,14 +173,14 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 20, fontWeight: '700', color: '#1E3A8A' },
   reqList: { paddingHorizontal: 16, gap: 8, marginBottom: 16 },
   reqChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E0E7FF', maxWidth: 150 },
-  reqChipActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
+  reqChipActive: { backgroundColor: '#1E40AF', borderColor: '#1E40AF' },
   reqChipText: { fontSize: 13, fontWeight: '600', color: '#475569' },
   reqChipTextActive: { color: '#FFFFFF' },
   section: { paddingHorizontal: 16, marginBottom: 24 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   sectionTitle: { fontSize: 17, fontWeight: '700', color: '#1E3A8A' },
   addBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  addText: { fontSize: 14, fontWeight: '600', color: '#2563EB' },
+  addText: { fontSize: 14, fontWeight: '600', color: '#1E40AF' },
   noPhotos: { fontSize: 14, color: '#94A3B8', fontStyle: 'italic' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   photoWrap: { width: '31%', aspectRatio: 1 },

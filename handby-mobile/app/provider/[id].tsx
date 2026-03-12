@@ -10,7 +10,7 @@ import { Button } from '../../components/ui/Button'
 
 const BADGE_CONFIG: Record<string, { bg: string; text: string; label: string; icon: string }> = {
   top:    { bg: '#FEF3C7', text: '#D97706', label: 'Top Pro', icon: 'trophy' },
-  rising: { bg: '#DBEAFE', text: '#2563EB', label: 'Rising Pro', icon: 'trending-up' },
+  rising: { bg: '#DBEAFE', text: '#1E40AF', label: 'Rising Pro', icon: 'trending-up' },
 }
 
 export default function ProviderProfileScreen() {
@@ -86,7 +86,7 @@ export default function ProviderProfileScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.safe}>
-        <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 60 }} />
+        <ActivityIndicator size="large" color="#1E40AF" style={{ marginTop: 60 }} />
       </SafeAreaView>
     )
   }
@@ -154,7 +154,7 @@ export default function ProviderProfileScreen() {
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <View style={styles.statIconWrap}>
-                <Ionicons name="checkmark-done" size={16} color="#2563EB" />
+                <Ionicons name="checkmark-done" size={16} color="#1E40AF" />
               </View>
               <Text style={styles.statValue}>{completionCount}</Text>
               <Text style={styles.statLabel}>jobs done</Text>
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
   },
   serviceInfo: { flex: 1 },
   serviceTitle: { fontSize: 15, fontWeight: '600', color: '#1E3A8A' },
-  serviceCategory: { fontSize: 13, color: '#2563EB', marginTop: 2 },
+  serviceCategory: { fontSize: 13, color: '#1E40AF', marginTop: 2 },
   servicePrice: { fontSize: 15, fontWeight: '700', color: '#1E3A8A' },
   // Portfolio
   portfolioGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

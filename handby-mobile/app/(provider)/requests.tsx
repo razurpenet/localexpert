@@ -28,7 +28,7 @@ interface Request {
 const STATUS_CONFIG: Record<string, { bg: string; text: string; icon: string; label: string }> = {
   pending:     { bg: '#FEF3C7', text: '#D97706', icon: 'time-outline',          label: 'Pending' },
   accepted:    { bg: '#DCFCE7', text: '#16A34A', icon: 'checkmark-circle',      label: 'Accepted' },
-  confirmed:   { bg: '#DBEAFE', text: '#2563EB', icon: 'calendar',              label: 'Confirmed' },
+  confirmed:   { bg: '#DBEAFE', text: '#1E40AF', icon: 'calendar',              label: 'Confirmed' },
   en_route:    { bg: '#E0E7FF', text: '#4F46E5', icon: 'navigate',              label: 'En Route' },
   in_progress: { bg: '#FEF3C7', text: '#D97706', icon: 'construct',             label: 'In Progress' },
   completed:   { bg: '#DCFCE7', text: '#16A34A', icon: 'checkmark-done-circle', label: 'Completed' },
@@ -43,7 +43,7 @@ const NEXT_ACTIONS: Record<string, { status: JobStatus; label: string; icon: str
     { status: 'declined', label: 'Decline', icon: 'close', bg: '#FEE2E2', text: '#DC2626' },
   ],
   accepted:    [
-    { status: 'confirmed', label: 'Confirm Job', icon: 'calendar', bg: '#DBEAFE', text: '#2563EB', timestampField: 'confirmed_at' },
+    { status: 'confirmed', label: 'Confirm Job', icon: 'calendar', bg: '#DBEAFE', text: '#1E40AF', timestampField: 'confirmed_at' },
   ],
   confirmed:   [
     { status: 'en_route', label: 'On My Way', icon: 'navigate', bg: '#E0E7FF', text: '#4F46E5', timestampField: 'en_route_at' },
@@ -149,7 +149,7 @@ export default function RequestsScreen() {
   const pendingCount = requests.filter(r => r.status === 'pending').length
 
   if (loading) {
-    return <SafeAreaView style={styles.safe} edges={['top']}><ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 60 }} /></SafeAreaView>
+    return <SafeAreaView style={styles.safe} edges={['top']}><ActivityIndicator size="large" color="#1E40AF" style={{ marginTop: 60 }} /></SafeAreaView>
   }
 
   return (
@@ -201,7 +201,7 @@ export default function RequestsScreen() {
                   </Text>
                 </View>
                 <TouchableOpacity style={styles.chatBtn} onPress={() => router.push(`/chat/${item.id}`)}>
-                  <Ionicons name="chatbubble-outline" size={20} color="#2563EB" />
+                  <Ionicons name="chatbubble-outline" size={20} color="#1E40AF" />
                 </TouchableOpacity>
               </View>
 
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
   pendingBadgeText: { fontSize: 13, fontWeight: '600', color: '#D97706' },
   tabs: { flexDirection: 'row', paddingHorizontal: 16, gap: 8, marginBottom: 12 },
   tab: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E0E7FF' },
-  tabActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
+  tabActive: { backgroundColor: '#1E40AF', borderColor: '#1E40AF' },
   tabText: { fontSize: 13, fontWeight: '600', color: '#475569' },
   tabTextActive: { color: '#FFFFFF' },
   list: { paddingHorizontal: 16, paddingBottom: 32 },
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
   cardRow: { flexDirection: 'row', gap: 12, padding: 16, paddingTop: 12 },
   cardInfo: { flex: 1 },
   cardName: { fontSize: 15, fontWeight: '600', color: '#1E3A8A' },
-  cardService: { fontSize: 13, color: '#2563EB', marginTop: 2 },
+  cardService: { fontSize: 13, color: '#1E40AF', marginTop: 2 },
   cardMessage: { fontSize: 13, color: '#475569', marginTop: 4 },
   cardDate: { fontSize: 12, color: '#94A3B8', marginTop: 4 },
   chatBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center' },
