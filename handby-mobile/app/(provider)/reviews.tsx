@@ -11,6 +11,9 @@ interface ReviewItem {
   id: string
   rating: number
   body: string | null
+  punctuality: number | null
+  quality: number | null
+  value: number | null
   created_at: string
   profiles: { full_name: string; avatar_url: string | null }
 }
@@ -62,7 +65,7 @@ export default function ReviewsScreen() {
     if (!user) return
     const { data } = await supabase
       .from('reviews')
-      .select('id, rating, body, created_at, profiles!reviews_reviewer_id_fkey(full_name, avatar_url)')
+      .select('id, rating, body, punctuality, quality, value, created_at, profiles!reviews_reviewer_id_fkey(full_name, avatar_url)')
       .eq('provider_id', user.id)
       .order('created_at', { ascending: false })
 

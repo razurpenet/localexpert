@@ -20,6 +20,7 @@ interface Result {
     completion_count?: number
     response_time_mins?: number | null
     badge_level?: 'new' | 'rising' | 'top'
+    is_verified?: boolean
   }
   primary_category: string | null
   min_price: number | null
@@ -60,7 +61,7 @@ export default function SearchScreen() {
     setLoading(true)
     let q = supabase
       .from('profiles')
-      .select('id, full_name, avatar_url, city, provider_details(business_name, is_available, avg_rating, review_count, completion_count, response_time_mins, badge_level)')
+      .select('id, full_name, avatar_url, city, provider_details(business_name, is_available, avg_rating, review_count, completion_count, response_time_mins, badge_level, is_verified)')
       .eq('role', 'provider')
       .not('provider_details', 'is', null)
       .limit(48)
@@ -212,6 +213,7 @@ export default function SearchScreen() {
               response_time_mins={item.provider_details?.response_time_mins ?? null}
               badge_level={item.provider_details?.badge_level as any ?? 'new'}
               credential_badges={item.credential_badges}
+              is_verified={item.provider_details?.is_verified ?? false}
             />
           )}
           ListHeaderComponent={

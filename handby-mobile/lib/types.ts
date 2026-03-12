@@ -24,6 +24,7 @@ export interface ProviderDetails {
   website_url: string | null
   avg_rating: number
   review_count: number
+  is_verified: boolean
 }
 
 export interface Category {
@@ -62,6 +63,9 @@ export interface Review {
   provider_id: string
   rating: number
   body: string | null
+  punctuality: number | null
+  quality: number | null
+  value: number | null
   created_at: string
 }
 
