@@ -115,6 +115,7 @@ export default function ProviderDashboard() {
     { label: 'Add your first service', done: serviceCount > 0 },
     { label: 'Upload portfolio photos', done: portfolioCount > 0 },
     { label: 'Get your first review', done: (details?.review_count ?? 0) > 0 },
+    { label: 'Get Handby Verified (3+ reviews, verified credential, complete profile)', done: details?.is_verified === true },
   ]
 
   const onRefresh = () => { setRefreshing(true); fetchAll() }
