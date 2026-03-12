@@ -9,6 +9,7 @@ export default function CustomerLayout() {
       tabBarInactiveTintColor: '#94A3B8',
       tabBarStyle: {
         backgroundColor: '#FFFFFF',
+        borderTopWidth: 1,
         borderTopColor: '#E0E7FF',
         height: 85,
         paddingBottom: 20,
