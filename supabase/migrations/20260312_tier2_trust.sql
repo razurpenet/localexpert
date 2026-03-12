@@ -40,3 +40,46 @@ $$ LANGUAGE plpgsql;
 
 -- Trigger already exists from Tier 1 (trg_update_badge), no need to recreate
 -- CREATE OR REPLACE FUNCTION handles the update
+
+-- ============================================================
+-- 3. Auto Response Time — median of last 20 responses
+-- ============================================================
+CREATE OR REPLACE FUNCTION update_provider_response_time()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_median integer;
+BEGIN
+  -- Only fire when status changes FROM 'pending' TO 'accepted' or 'declined'
+  IF OLD.status != 'pending' OR NEW.status NOT IN ('accepted', 'declined') THEN
+    RETURN NEW;
+  END IF;
+
+  -- Calculate median response time from last 20 responded requests
+  SELECT percentile_cont(0.5) WITHIN GROUP (
+    ORDER BY EXTRACT(EPOCH FROM (updated_at - created_at)) / 60
+  )::integer
+  INTO v_median
+  FROM (
+    SELECT created_at, updated_at
+    FROM quote_requests
+    WHERE provider_id = NEW.provider_id
+      AND status IN ('accepted', 'declined')
+      AND updated_at IS NOT NULL
+    ORDER BY updated_at DESC
+    LIMIT 20
+  ) recent;
+
+  -- Update provider_details with median response time
+  UPDATE provider_details
+  SET response_time_mins = COALESCE(v_median, 0)
+  WHERE id = NEW.provider_id;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_update_response_time ON quote_requests;
+CREATE TRIGGER trg_update_response_time
+  AFTER UPDATE ON quote_requests
+  FOR EACH ROW
+  EXECUTE FUNCTION update_provider_response_time();
