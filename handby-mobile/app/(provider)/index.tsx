@@ -139,7 +139,8 @@ const styles = StyleSheet.create({
   },
   stat: {
     flex: 1, backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, alignItems: 'center',
-    shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 1,
+    borderWidth: 1, borderColor: '#E0E7FF',
+    shadowColor: '#1E40AF', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 1,
   },
   statNum: { fontSize: 24, fontWeight: '700', color: '#1E40AF' },
   statLabel: { fontSize: 12, color: '#475569', marginTop: 4 },

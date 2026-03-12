@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
   tabText: { fontSize: 13, fontWeight: '600', color: '#475569' },
   tabTextActive: { color: '#FFFFFF' },
   list: { paddingHorizontal: 16, paddingBottom: 32 },
-  card: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, marginBottom: 10, shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 1 },
+  card: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, marginBottom: 10, shadowColor: '#1E40AF', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 1 },
   cardRow: { flexDirection: 'row', gap: 12 },
   cardInfo: { flex: 1 },
   cardName: { fontSize: 15, fontWeight: '600', color: '#1E3A8A' },

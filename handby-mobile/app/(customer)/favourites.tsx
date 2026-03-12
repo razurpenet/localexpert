@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, marginBottom: 10,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 1,
+    shadowColor: '#1E40AF', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 1,
   },
   info: { flex: 1 },
   name: { fontSize: 16, fontWeight: '600', color: '#1E3A8A' },

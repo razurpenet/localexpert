@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row', gap: 16, backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20,
     marginHorizontal: 16, marginBottom: 24,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 1,
+    shadowColor: '#1E40AF', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 1,
   },
   info: { flex: 1, justifyContent: 'center' },
   name: { fontSize: 18, fontWeight: '700', color: '#1E3A8A' },

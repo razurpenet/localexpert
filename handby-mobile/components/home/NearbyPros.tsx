@@ -76,7 +76,8 @@ const styles = StyleSheet.create({
   list: { gap: 12, paddingRight: 16 },
   card: {
     backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, width: 150,
-    alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05,
+    borderWidth: 1, borderColor: '#E0E7FF',
+    alignItems: 'center', shadowColor: '#1E40AF', shadowOpacity: 0.06,
     shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2,
   },
   name: { fontSize: 14, fontWeight: '600', color: '#1E3A8A', marginTop: 10, textAlign: 'center' },

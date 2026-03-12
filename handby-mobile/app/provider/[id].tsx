@@ -311,8 +311,8 @@ const styles = StyleSheet.create({
   navBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
   headerCard: {
     backgroundColor: '#FFFFFF', borderRadius: 20, padding: 24, marginHorizontal: 16, marginTop: 8,
-    alignItems: 'center',
-    shadowColor: '#000', shadowOpacity: 0.05, shadowOffset: { width: 0, height: 2 }, shadowRadius: 10, elevation: 2,
+    alignItems: 'center', borderWidth: 1, borderColor: '#E0E7FF',
+    shadowColor: '#1E40AF', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 10, elevation: 2,
   },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
   name: { fontSize: 22, fontWeight: '700', color: '#1E3A8A' },

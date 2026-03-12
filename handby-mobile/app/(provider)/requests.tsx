@@ -249,7 +249,8 @@ const styles = StyleSheet.create({
   list: { paddingHorizontal: 16, paddingBottom: 32 },
   card: {
     backgroundColor: '#FFFFFF', borderRadius: 16, overflow: 'hidden', marginBottom: 12,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 1,
+    borderWidth: 1, borderColor: '#E0E7FF',
+    shadowColor: '#1E40AF', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 1,
   },
   statusStrip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 8 },
   statusStripText: { fontSize: 12, fontWeight: '700' },

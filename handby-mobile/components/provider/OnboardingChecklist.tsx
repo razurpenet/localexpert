@@ -39,7 +39,7 @@ export function OnboardingChecklist({ items }: Props) {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20, marginHorizontal: 16, marginTop: 16,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 1,
+    shadowColor: '#1E40AF', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 1,
   },
   title: { fontSize: 17, fontWeight: '700', color: '#1E3A8A' },
   subtitle: { fontSize: 13, color: '#475569', marginTop: 4, marginBottom: 12 },

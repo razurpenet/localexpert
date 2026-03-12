@@ -85,7 +85,8 @@ const styles = StyleSheet.create({
   list: { paddingBottom: 32 },
   card: {
     backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, marginHorizontal: 16, marginBottom: 12,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 1,
+    borderWidth: 1, borderColor: '#E0E7FF',
+    shadowColor: '#1E40AF', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 1,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   headerInfo: { flex: 1 },
