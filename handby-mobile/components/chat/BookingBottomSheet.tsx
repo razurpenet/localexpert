@@ -75,13 +75,19 @@ export function BookingBottomSheet({ visible, onClose, requestId, customerId, ac
               <Ionicons name="calendar-outline" size={18} color={colors.primary} />
               <Text style={styles.pickerText}>{dateStr}</Text>
             </TouchableOpacity>
-            {showDatePicker && (
+            {showDatePicker && Platform.OS === 'ios' && (
               <DateTimePicker
                 value={date}
                 mode="date"
+                display="spinner"
                 minimumDate={new Date()}
-                onChange={(_, d) => { setShowDatePicker(false); if (d) setDate(d) }}
+                onChange={(_, d) => { if (d) setDate(d) }}
               />
+            )}
+            {showDatePicker && Platform.OS === 'ios' && (
+              <TouchableOpacity style={styles.pickerDone} onPress={() => setShowDatePicker(false)}>
+                <Text style={styles.pickerDoneText}>Done</Text>
+              </TouchableOpacity>
             )}
 
             {/* Time */}
@@ -90,12 +96,18 @@ export function BookingBottomSheet({ visible, onClose, requestId, customerId, ac
               <Ionicons name="time-outline" size={18} color={colors.primary} />
               <Text style={styles.pickerText}>{timeStr}</Text>
             </TouchableOpacity>
-            {showTimePicker && (
+            {showTimePicker && Platform.OS === 'ios' && (
               <DateTimePicker
                 value={time}
                 mode="time"
-                onChange={(_, t) => { setShowTimePicker(false); if (t) setTime(t) }}
+                display="spinner"
+                onChange={(_, t) => { if (t) setTime(t) }}
               />
+            )}
+            {showTimePicker && Platform.OS === 'ios' && (
+              <TouchableOpacity style={styles.pickerDone} onPress={() => setShowTimePicker(false)}>
+                <Text style={styles.pickerDoneText}>Done</Text>
+              </TouchableOpacity>
             )}
 
             {/* Notes */}
@@ -124,6 +136,25 @@ export function BookingBottomSheet({ visible, onClose, requestId, customerId, ac
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Android: render pickers outside the sheet to avoid Modal z-index conflict */}
+      {showDatePicker && Platform.OS === 'android' && (
+        <DateTimePicker
+          value={date}
+          mode="date"
+          display="default"
+          minimumDate={new Date()}
+          onChange={(_, d) => { setShowDatePicker(false); if (d) setDate(d) }}
+        />
+      )}
+      {showTimePicker && Platform.OS === 'android' && (
+        <DateTimePicker
+          value={time}
+          mode="time"
+          display="default"
+          onChange={(_, t) => { setShowTimePicker(false); if (t) setTime(t) }}
+        />
+      )}
     </Modal>
   )
 }
@@ -164,4 +195,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 20, marginTop: 20, alignItems: 'center',
   },
   sendBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
+  pickerDone: { alignSelf: 'flex-end', paddingVertical: 6, paddingHorizontal: 12 },
+  pickerDoneText: { fontSize: 15, fontWeight: '600', color: colors.primary },
 })
