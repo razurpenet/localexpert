@@ -31,14 +31,50 @@ const CATEGORY_LABELS: Record<string, string> = {
   'plumbing': 'Plumbing', 'electrical': 'Electrical', 'cleaning': 'Cleaning',
   'painting': 'Painting', 'carpentry': 'Carpentry', 'catering': 'Catering',
   'gardening': 'Gardening', 'moving-removals': 'Moving & Removals',
-  'beauty-wellness': 'Beauty & Wellness', 'photography': 'Photography',
-  'tutoring': 'Tutoring', 'it-tech-support': 'IT & Tech Support',
+  'beauty-wellness': 'Beauty & Wellness', 'photography': 'Photography & Videography',
+  'tutoring': 'Tutoring & Mentoring', 'it-tech-support': 'IT & Tech Support',
   'locksmith': 'Locksmith', 'roofing': 'Roofing', 'appliance-repair': 'Appliance Repair',
   'mobile-mechanic': 'Mobile Mechanic', 'pet-care': 'Pet Care',
   'home-care': 'Home & Elderly Care', 'childcare': 'Childcare',
   'personal-training': 'Personal Training', 'pest-control': 'Pest Control',
   'solar-ev': 'Solar & EV Install', 'event-planning': 'Event Planning',
   'driving-instruction': 'Driving Instruction',
+  'african-hair-braiding': 'African Hair Braiding', 'afro-caribbean-catering': 'Afro-Caribbean Catering',
+  'african-tailoring': 'African Tailoring', 'celebration-cakes': 'Celebration Cakes',
+  'event-decoration': 'Event Decoration', 'gele-headwrap': 'Gele & Headwrap Styling',
+  'makeup-artist': 'Makeup Artist', 'afro-barber': 'Barber (Afro Specialist)',
+  'home-cooking': 'Home Cooking & Meal Prep', 'dj-entertainment': 'DJ & Entertainment',
+  'translation': 'Translation & Interpreting', 'immigration-consulting': 'Immigration Consulting',
+  'laundry-ironing': 'Laundry & Ironing', 'party-planning': 'Party Planning',
+}
+
+function calculateRankScore(provider: Result & { lat?: number | null; lng?: number | null }, customerLat?: number | null, customerLng?: number | null): number {
+  const d = provider.provider_details
+  if (!d) return 0
+
+  const ratingScore = (d.avg_rating ?? 0) / 5
+  const mins = d.response_time_mins
+  const speedScore = mins == null ? 0 : mins < 30 ? 1.0 : mins < 120 ? 0.7 : mins < 1440 ? 0.3 : 0.1
+  const completionScore = Math.min((d.completion_count ?? 0) / 20, 1.0)
+  const availScore = d.is_available ? 1.0 : 0.0
+
+  let distScore = 0.5
+  if (customerLat != null && customerLng != null && provider.lat != null && provider.lng != null) {
+    const dist = haversineKm(customerLat, customerLng, provider.lat, provider.lng)
+    distScore = Math.max(0, 1 - dist / 50)
+  }
+
+  return (ratingScore * 0.30) + (speedScore * 0.25) + (completionScore * 0.20) + (availScore * 0.15) + (distScore * 0.10)
+}
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLng = (lng2 - lng1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
 export default function SearchScreen() {
@@ -61,7 +97,7 @@ export default function SearchScreen() {
     setLoading(true)
     let q = supabase
       .from('profiles')
-      .select('id, full_name, avatar_url, city, provider_details(business_name, is_available, avg_rating, review_count, completion_count, response_time_mins, badge_level, is_verified)')
+      .select('id, full_name, avatar_url, city, lat, lng, provider_details(business_name, is_available, avg_rating, review_count, completion_count, response_time_mins, badge_level, is_verified)')
       .eq('role', 'provider')
       .not('provider_details', 'is', null)
       .limit(48)
@@ -133,6 +169,12 @@ export default function SearchScreen() {
     // Apply filters
     let filtered = enriched.filter(p => p.provider_details)
 
+    // Apply smart ranking as default sort
+    filtered.forEach(p => {
+      (p as any)._rankScore = calculateRankScore(p as any, null, null)
+    })
+    filtered.sort((a, b) => ((b as any)._rankScore ?? 0) - ((a as any)._rankScore ?? 0))
+
     if (categoryFilter) {
       filtered = filtered.filter(p => p._categorySlugs.includes(categoryFilter))
     }
@@ -197,7 +239,7 @@ export default function SearchScreen() {
         <FlatList
           data={results}
           keyExtractor={item => item.id}
-          renderItem={({ item }) => (
+          renderItem={({ item, index }) => (
             <ProviderResultCard
               id={item.id}
               full_name={item.full_name}
@@ -214,6 +256,7 @@ export default function SearchScreen() {
               badge_level={item.provider_details?.badge_level as any ?? 'new'}
               credential_badges={item.credential_badges}
               is_verified={item.provider_details?.is_verified ?? false}
+              isTopMatch={index === 0 && !filter}
             />
           )}
           ListHeaderComponent={
