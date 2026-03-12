@@ -20,6 +20,7 @@ interface Props {
   badge_level?: 'new' | 'rising' | 'top'
   credential_badges?: string[]   // e.g. ['Gas Safe', 'DBS Checked', 'Insured']
   is_verified?: boolean
+  isTopMatch?: boolean
 }
 
 const BADGE_CONFIG: Record<string, { bg: string; text: string; label: string }> = {
@@ -44,6 +45,13 @@ export function ProviderResultCard(props: Props) {
 
   return (
     <TouchableOpacity style={styles.card} onPress={() => router.push(`/provider/${props.id}`)}>
+      {/* Best Match badge */}
+      {props.isTopMatch && (
+        <View style={styles.bestMatchBadge}>
+          <Ionicons name="ribbon" size={12} color="#D97706" />
+          <Text style={styles.bestMatchText}>Best Match</Text>
+        </View>
+      )}
       {/* Top row: Avatar + Info + Right badges */}
       <View style={styles.row}>
         <View>
@@ -179,4 +187,20 @@ const styles = StyleSheet.create({
   trustBadgeText: { fontSize: 10, fontWeight: '600', color: '#16A34A' },
   responseTimeBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#EFF6FF', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 3 },
   responseTimeText: { fontSize: 10, fontWeight: '600', color: '#1E40AF' },
+  bestMatchBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FEF3C7',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  bestMatchText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#D97706',
+  },
 })
