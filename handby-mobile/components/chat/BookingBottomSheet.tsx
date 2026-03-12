@@ -1,10 +1,15 @@
 import { useState } from 'react'
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Modal, KeyboardAvoidingView, Platform } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import DateTimePicker from '@react-native-community/datetimepicker'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth-context'
 import { colors, radius } from '../../lib/theme'
+
+// Only import DateTimePicker on native platforms
+let DateTimePicker: any = null
+if (Platform.OS !== 'web') {
+  DateTimePicker = require('@react-native-community/datetimepicker').default
+}
 
 interface Props {
   visible: boolean
@@ -25,6 +30,19 @@ export function BookingBottomSheet({ visible, onClose, requestId, customerId, ac
 
   const dateStr = date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
   const timeStr = time.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+
+  function handleWebDateChange(value: string) {
+    if (value) setDate(new Date(value + 'T12:00:00'))
+  }
+
+  function handleWebTimeChange(value: string) {
+    if (value) {
+      const [h, m] = value.split(':').map(Number)
+      const t = new Date()
+      t.setHours(h, m, 0, 0)
+      setTime(t)
+    }
+  }
 
   async function send() {
     if (!user || !acceptedQuote) return
@@ -56,6 +74,8 @@ export function BookingBottomSheet({ visible, onClose, requestId, customerId, ac
     onClose()
   }
 
+  const isWeb = Platform.OS === 'web'
+
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -71,43 +91,74 @@ export function BookingBottomSheet({ visible, onClose, requestId, customerId, ac
           <View style={styles.content}>
             {/* Date */}
             <Text style={styles.label}>Date</Text>
-            <TouchableOpacity style={styles.pickerBtn} onPress={() => setShowDatePicker(true)}>
-              <Ionicons name="calendar-outline" size={18} color={colors.primary} />
-              <Text style={styles.pickerText}>{dateStr}</Text>
-            </TouchableOpacity>
-            {showDatePicker && Platform.OS === 'ios' && (
-              <DateTimePicker
-                value={date}
-                mode="date"
-                display="spinner"
-                minimumDate={new Date()}
-                onChange={(_, d) => { if (d) setDate(d) }}
+            {isWeb ? (
+              <input
+                type="date"
+                value={date.toISOString().split('T')[0]}
+                min={new Date().toISOString().split('T')[0]}
+                onChange={e => handleWebDateChange(e.target.value)}
+                style={{
+                  backgroundColor: '#EFF6FF', borderRadius: 12, padding: '12px 14px',
+                  fontSize: 15, color: '#1E3A8A', border: '1px solid #E0E7FF',
+                  width: '100%', boxSizing: 'border-box' as any,
+                }}
               />
-            )}
-            {showDatePicker && Platform.OS === 'ios' && (
-              <TouchableOpacity style={styles.pickerDone} onPress={() => setShowDatePicker(false)}>
-                <Text style={styles.pickerDoneText}>Done</Text>
-              </TouchableOpacity>
+            ) : (
+              <>
+                <TouchableOpacity style={styles.pickerBtn} onPress={() => setShowDatePicker(true)}>
+                  <Ionicons name="calendar-outline" size={18} color={colors.primary} />
+                  <Text style={styles.pickerText}>{dateStr}</Text>
+                </TouchableOpacity>
+                {showDatePicker && Platform.OS === 'ios' && DateTimePicker && (
+                  <DateTimePicker
+                    value={date}
+                    mode="date"
+                    display="spinner"
+                    minimumDate={new Date()}
+                    onChange={(_: any, d: Date | undefined) => { if (d) setDate(d) }}
+                  />
+                )}
+                {showDatePicker && Platform.OS === 'ios' && (
+                  <TouchableOpacity style={styles.pickerDone} onPress={() => setShowDatePicker(false)}>
+                    <Text style={styles.pickerDoneText}>Done</Text>
+                  </TouchableOpacity>
+                )}
+              </>
             )}
 
             {/* Time */}
             <Text style={styles.label}>Time</Text>
-            <TouchableOpacity style={styles.pickerBtn} onPress={() => setShowTimePicker(true)}>
-              <Ionicons name="time-outline" size={18} color={colors.primary} />
-              <Text style={styles.pickerText}>{timeStr}</Text>
-            </TouchableOpacity>
-            {showTimePicker && Platform.OS === 'ios' && (
-              <DateTimePicker
-                value={time}
-                mode="time"
-                display="spinner"
-                onChange={(_, t) => { if (t) setTime(t) }}
+            {isWeb ? (
+              <input
+                type="time"
+                value={`${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`}
+                onChange={e => handleWebTimeChange(e.target.value)}
+                style={{
+                  backgroundColor: '#EFF6FF', borderRadius: 12, padding: '12px 14px',
+                  fontSize: 15, color: '#1E3A8A', border: '1px solid #E0E7FF',
+                  width: '100%', boxSizing: 'border-box' as any,
+                }}
               />
-            )}
-            {showTimePicker && Platform.OS === 'ios' && (
-              <TouchableOpacity style={styles.pickerDone} onPress={() => setShowTimePicker(false)}>
-                <Text style={styles.pickerDoneText}>Done</Text>
-              </TouchableOpacity>
+            ) : (
+              <>
+                <TouchableOpacity style={styles.pickerBtn} onPress={() => setShowTimePicker(true)}>
+                  <Ionicons name="time-outline" size={18} color={colors.primary} />
+                  <Text style={styles.pickerText}>{timeStr}</Text>
+                </TouchableOpacity>
+                {showTimePicker && Platform.OS === 'ios' && DateTimePicker && (
+                  <DateTimePicker
+                    value={time}
+                    mode="time"
+                    display="spinner"
+                    onChange={(_: any, t: Date | undefined) => { if (t) setTime(t) }}
+                  />
+                )}
+                {showTimePicker && Platform.OS === 'ios' && (
+                  <TouchableOpacity style={styles.pickerDone} onPress={() => setShowTimePicker(false)}>
+                    <Text style={styles.pickerDoneText}>Done</Text>
+                  </TouchableOpacity>
+                )}
+              </>
             )}
 
             {/* Notes */}
@@ -138,21 +189,21 @@ export function BookingBottomSheet({ visible, onClose, requestId, customerId, ac
       </KeyboardAvoidingView>
 
       {/* Android: render pickers outside the sheet to avoid Modal z-index conflict */}
-      {showDatePicker && Platform.OS === 'android' && (
+      {!isWeb && showDatePicker && Platform.OS === 'android' && DateTimePicker && (
         <DateTimePicker
           value={date}
           mode="date"
           display="default"
           minimumDate={new Date()}
-          onChange={(_, d) => { setShowDatePicker(false); if (d) setDate(d) }}
+          onChange={(_: any, d: Date | undefined) => { setShowDatePicker(false); if (d) setDate(d) }}
         />
       )}
-      {showTimePicker && Platform.OS === 'android' && (
+      {!isWeb && showTimePicker && Platform.OS === 'android' && DateTimePicker && (
         <DateTimePicker
           value={time}
           mode="time"
           display="default"
-          onChange={(_, t) => { setShowTimePicker(false); if (t) setTime(t) }}
+          onChange={(_: any, t: Date | undefined) => { setShowTimePicker(false); if (t) setTime(t) }}
         />
       )}
     </Modal>
