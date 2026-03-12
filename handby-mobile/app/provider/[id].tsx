@@ -8,6 +8,18 @@ import { useAuth } from '../../lib/auth-context'
 import { Avatar } from '../../components/ui/Avatar'
 import { Button } from '../../components/ui/Button'
 
+function SubScoreBar({ label, avg }: { label: string; avg: number }) {
+  return (
+    <View style={styles.subBar}>
+      <Text style={styles.subBarLabel}>{label}</Text>
+      <View style={styles.subBarTrack}>
+        <View style={[styles.subBarFill, { width: `${(avg / 5) * 100}%` }]} />
+      </View>
+      <Text style={styles.subBarValue}>{avg.toFixed(1)}</Text>
+    </View>
+  )
+}
+
 const BADGE_CONFIG: Record<string, { bg: string; text: string; label: string; icon: string }> = {
   top:    { bg: '#FEF3C7', text: '#D97706', label: 'Top Pro', icon: 'trophy' },
   rising: { bg: '#DBEAFE', text: '#1E40AF', label: 'Rising Pro', icon: 'trending-up' },
@@ -108,6 +120,25 @@ export default function ProviderProfileScreen() {
   const completionCount = details?.completion_count ?? 0
   const responseTime = details?.response_time_mins
 
+  // Calculate sub-score averages from reviews that have sub-scores
+  const subScoreReviews = reviews.filter(
+    (r: any) => r.punctuality != null || r.quality != null || r.value != null
+  )
+  const subScores = subScoreReviews.length >= 3 ? {
+    punctuality: subScoreReviews.filter((r: any) => r.punctuality != null).length > 0
+      ? subScoreReviews.reduce((sum: number, r: any) => sum + (r.punctuality ?? 0), 0) /
+        subScoreReviews.filter((r: any) => r.punctuality != null).length
+      : null,
+    quality: subScoreReviews.filter((r: any) => r.quality != null).length > 0
+      ? subScoreReviews.reduce((sum: number, r: any) => sum + (r.quality ?? 0), 0) /
+        subScoreReviews.filter((r: any) => r.quality != null).length
+      : null,
+    value: subScoreReviews.filter((r: any) => r.value != null).length > 0
+      ? subScoreReviews.reduce((sum: number, r: any) => sum + (r.value ?? 0), 0) /
+        subScoreReviews.filter((r: any) => r.value != null).length
+      : null,
+  } : null
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -184,6 +215,16 @@ export default function ProviderProfileScreen() {
               </>
             )}
           </View>
+
+          {/* Sub-score breakdown */}
+          {subScores && (
+            <View style={styles.subScoresCard}>
+              <Text style={styles.subScoresTitle}>Rating Breakdown</Text>
+              {subScores.punctuality != null && <SubScoreBar label="Punctuality" avg={subScores.punctuality} />}
+              {subScores.quality != null && <SubScoreBar label="Quality" avg={subScores.quality} />}
+              {subScores.value != null && <SubScoreBar label="Value" avg={subScores.value} />}
+            </View>
+          )}
 
           {details?.is_available && (
             <View style={styles.availBadge}>
@@ -365,4 +406,46 @@ const styles = StyleSheet.create({
     padding: 16, fontSize: 15, color: '#1E3A8A', minHeight: 100, marginBottom: 12,
   },
   errorText: { fontSize: 16, color: '#EF4444', textAlign: 'center', marginTop: 60 },
+  subScoresCard: {
+    width: '100%',
+    marginTop: 16,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E7FF',
+  },
+  subScoresTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#475569',
+    marginBottom: 10,
+  },
+  subBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  subBarLabel: {
+    fontSize: 13,
+    color: '#1E3A8A',
+    width: 80,
+  },
+  subBarTrack: {
+    flex: 1,
+    height: 6,
+    backgroundColor: '#E0E7FF',
+    borderRadius: 3,
+  },
+  subBarFill: {
+    height: 6,
+    backgroundColor: '#1E40AF',
+    borderRadius: 3,
+  },
+  subBarValue: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1E3A8A',
+    width: 28,
+    textAlign: 'right',
+  },
 })
