@@ -7,6 +7,25 @@ import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth-context'
 
+function SubScoreRow({ label, value, onChange }: { label: string; value: number; onChange: (n: number) => void }) {
+  return (
+    <View style={styles.subScoreRow}>
+      <Text style={styles.subScoreLabel}>{label}</Text>
+      <View style={styles.subScoreStars}>
+        {[1, 2, 3, 4, 5].map(n => (
+          <TouchableOpacity key={n} onPress={() => onChange(value === n ? 0 : n)} activeOpacity={0.7}>
+            <Ionicons
+              name={n <= value ? 'star' : 'star-outline'}
+              size={20}
+              color={n <= value ? '#FACC15' : '#CBD5E1'}
+            />
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  )
+}
+
 interface ReviewModalProps {
   visible: boolean
   requestId: string
@@ -20,11 +39,17 @@ export function ReviewModal({ visible, requestId, providerId, providerName, onCl
   const { user } = useAuth()
   const [rating, setRating] = useState(0)
   const [body, setBody] = useState('')
+  const [punctuality, setPunctuality] = useState(0)
+  const [quality, setQuality] = useState(0)
+  const [value, setValue] = useState(0)
   const [submitting, setSubmitting] = useState(false)
 
   function reset() {
     setRating(0)
     setBody('')
+    setPunctuality(0)
+    setQuality(0)
+    setValue(0)
   }
 
   async function handleSubmit() {
@@ -43,6 +68,9 @@ export function ReviewModal({ visible, requestId, providerId, providerName, onCl
       provider_id: providerId,
       rating,
       body: body.trim() || null,
+      punctuality: punctuality || null,
+      quality: quality || null,
+      value: value || null,
     })
     setSubmitting(false)
 
@@ -94,6 +122,16 @@ export function ReviewModal({ visible, requestId, providerId, providerName, onCl
             <Text style={styles.ratingLabel}>
               {rating === 1 ? 'Poor' : rating === 2 ? 'Fair' : rating === 3 ? 'Good' : rating === 4 ? 'Great' : 'Excellent'}
             </Text>
+          )}
+
+          {/* Sub-scores (progressive disclosure) */}
+          {rating > 0 && (
+            <View style={styles.subScoreSection}>
+              <Text style={styles.subScoreTitle}>Rate specific areas (optional)</Text>
+              <SubScoreRow label="Punctuality" value={punctuality} onChange={setPunctuality} />
+              <SubScoreRow label="Quality" value={quality} onChange={setQuality} />
+              <SubScoreRow label="Value" value={value} onChange={setValue} />
+            </View>
           )}
 
           {/* Comment */}
@@ -193,5 +231,34 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  subScoreSection: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E0E7FF',
+  },
+  subScoreTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#475569',
+    marginBottom: 10,
+  },
+  subScoreRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  subScoreLabel: {
+    fontSize: 14,
+    color: '#1E3A8A',
+    fontWeight: '500',
+  },
+  subScoreStars: {
+    flexDirection: 'row',
+    gap: 4,
   },
 })
