@@ -45,7 +45,7 @@ export async function registerForPushNotifications(userId: string): Promise<stri
       name: 'Job Updates',
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#2563EB',
+      lightColor: '#1E40AF',
     })
   }
 
