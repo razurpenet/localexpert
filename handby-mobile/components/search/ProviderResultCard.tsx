@@ -19,6 +19,7 @@ interface Props {
   response_time_mins?: number | null
   badge_level?: 'new' | 'rising' | 'top'
   credential_badges?: string[]   // e.g. ['Gas Safe', 'DBS Checked', 'Insured']
+  is_verified?: boolean
 }
 
 const BADGE_CONFIG: Record<string, { bg: string; text: string; label: string }> = {
@@ -60,6 +61,9 @@ export function ProviderResultCard(props: Props) {
                 <Ionicons name="shield-checkmark" size={10} color={badge.text} />
                 <Text style={[styles.proBadgeText, { color: badge.text }]}>{badge.label}</Text>
               </View>
+            )}
+            {props.is_verified && (
+              <Ionicons name="shield-checkmark" size={14} color="#1E40AF" />
             )}
           </View>
 
