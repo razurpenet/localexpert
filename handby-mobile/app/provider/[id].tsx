@@ -331,6 +331,27 @@ export default function ProviderProfileScreen() {
                   c.type === 'certification' ? 'ribbon' :
                   c.type === 'license' ? 'document-text' :
                   'checkmark-circle'
+                if (c.type === 'insurance') {
+                  return (
+                    <View key={c.id} style={styles.insuranceBadge}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Ionicons name="shield-checkmark" size={22} color="#16A34A" />
+                        <Text style={styles.insuranceBadgeTitle}>{c.label}</Text>
+                      </View>
+                      {c.insurer_name && (
+                        <Text style={styles.insuranceBadgeInsurer}>{c.insurer_name}</Text>
+                      )}
+                      {c.coverage_amount && (
+                        <Text style={styles.insuranceBadgeCoverage}>Coverage: {c.coverage_amount}</Text>
+                      )}
+                      {c.expires_at && (
+                        <Text style={styles.credExpiry}>
+                          Exp: {new Date(c.expires_at).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
+                        </Text>
+                      )}
+                    </View>
+                  )
+                }
                 return (
                   <View key={c.id} style={styles.credCard}>
                     <Ionicons name={iconName} size={20} color="#16A34A" />
@@ -605,6 +626,13 @@ const styles = StyleSheet.create({
   credLabel: { fontSize: 13, fontWeight: '600', color: '#1E3A8A' },
   credType: { fontSize: 11, color: '#16A34A', fontWeight: '500' },
   credExpiry: { fontSize: 10, color: '#475569' },
+  insuranceBadge: {
+    backgroundColor: '#F0FDF4', borderRadius: 12, padding: 14, width: '100%',
+    borderWidth: 1, borderColor: '#BBF7D0', gap: 4,
+  },
+  insuranceBadgeTitle: { fontSize: 14, fontWeight: '700', color: '#1E3A8A' },
+  insuranceBadgeInsurer: { fontSize: 12, color: '#475569', marginLeft: 28 },
+  insuranceBadgeCoverage: { fontSize: 13, fontWeight: '600', color: '#16A34A', marginLeft: 28 },
   // Services
   serviceCard: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
