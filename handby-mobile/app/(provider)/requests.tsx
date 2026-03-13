@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Platform, Alert, Modal, TextInput, KeyboardAvoidingView } from 'react-native'
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Platform, Alert, Modal, TextInput, KeyboardAvoidingView, Image, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -26,6 +26,7 @@ interface Request {
   preferred_date: string | null
   quoted_price: number | null
   rebooking_of: string | null
+  images: string[] | null
   profiles: { full_name: string; avatar_url: string | null }
   services: { title: string; price_from: number | null } | null
 }
@@ -80,7 +81,7 @@ export default function RequestsScreen() {
     if (!user) return
     const { data } = await supabase
       .from('quote_requests')
-      .select('id, message, status, created_at, confirmed_at, en_route_at, started_at, completed_at, urgency, preferred_time, preferred_date, quoted_price, rebooking_of, profiles!quote_requests_customer_id_fkey(full_name, avatar_url), services(title, price_from)')
+      .select('id, message, status, created_at, confirmed_at, en_route_at, started_at, completed_at, urgency, preferred_time, preferred_date, quoted_price, rebooking_of, images, profiles!quote_requests_customer_id_fkey(full_name, avatar_url), services(title, price_from)')
       .eq('provider_id', user.id)
       .order('created_at', { ascending: false })
 
@@ -247,6 +248,13 @@ export default function RequestsScreen() {
                   <Text style={styles.cardName}>{item.profiles?.full_name}</Text>
                   {item.services?.title && <Text style={styles.cardService}>{item.services.title}</Text>}
                   <Text style={styles.cardMessage} numberOfLines={2}>{item.message}</Text>
+                  {item.images && item.images.length > 0 && (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reqImages}>
+                      {item.images.map((url: string, i: number) => (
+                        <Image key={i} source={{ uri: url }} style={styles.reqImageThumb} />
+                      ))}
+                    </ScrollView>
+                  )}
                   <Text style={styles.cardDate}>
                     {new Date(item.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                   </Text>
@@ -383,6 +391,8 @@ const styles = StyleSheet.create({
   cardName: { fontSize: 15, fontWeight: '600', color: '#1E3A8A' },
   cardService: { fontSize: 13, color: '#1E40AF', marginTop: 2 },
   cardMessage: { fontSize: 13, color: '#475569', marginTop: 4 },
+  reqImages: { marginTop: 8 },
+  reqImageThumb: { width: 60, height: 60, borderRadius: 8, marginRight: 6 },
   cardDate: { fontSize: 12, color: '#94A3B8', marginTop: 4 },
   chatBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center' },
   actions: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingBottom: 16 },
