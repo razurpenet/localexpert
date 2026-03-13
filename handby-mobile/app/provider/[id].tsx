@@ -3,6 +3,7 @@ import { ScrollView, View, Text, Image, StyleSheet, TouchableOpacity, ActivityIn
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import * as ImagePicker from 'expo-image-picker'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth-context'
 import { Avatar } from '../../components/ui/Avatar'
@@ -48,6 +49,8 @@ export default function ProviderProfileScreen() {
   const [preferredTime, setPreferredTime] = useState<'morning' | 'afternoon' | 'evening' | 'flexible'>('flexible')
   const [albums, setAlbums] = useState<string[]>([])
   const [activeAlbumFilter, setActiveAlbumFilter] = useState<string | null>(null)
+  const [quoteImages, setQuoteImages] = useState<string[]>([])
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -97,6 +100,44 @@ export default function ProviderProfileScreen() {
     }
   }
 
+  async function pickQuoteImage() {
+    if (quoteImages.length >= 5) {
+      const msg = 'Maximum 5 photos per request'
+      if (Platform.OS === 'web') window.alert(msg)
+      else Alert.alert('Limit', msg)
+      return
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.7,
+      allowsMultipleSelection: true,
+      selectionLimit: 5 - quoteImages.length,
+    })
+    if (result.canceled || !result.assets.length) return
+
+    setUploadingImage(true)
+    const newUrls: string[] = []
+    for (const asset of result.assets) {
+      const ext = asset.uri.split('.').pop() ?? 'jpg'
+      const fileName = `${user!.id}/quotes/${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${ext}`
+      const response = await fetch(asset.uri)
+      const blob = await response.blob()
+      const { error: uploadError } = await supabase.storage
+        .from('portfolio')
+        .upload(fileName, blob, { contentType: `image/${ext}` })
+      if (!uploadError) {
+        const { data: { publicUrl } } = supabase.storage.from('portfolio').getPublicUrl(fileName)
+        newUrls.push(publicUrl)
+      }
+    }
+    setQuoteImages(prev => [...prev, ...newUrls].slice(0, 5))
+    setUploadingImage(false)
+  }
+
+  function removeQuoteImage(url: string) {
+    setQuoteImages(prev => prev.filter(u => u !== url))
+  }
+
   async function sendQuote() {
     if (!message.trim() || !user) return
     setSending(true)
@@ -109,6 +150,7 @@ export default function ProviderProfileScreen() {
       urgency,
       preferred_time: preferredTime,
       rebooking_of: rebook === 'true' && originalRequestId ? originalRequestId : null,
+      images: quoteImages,
     })
     setSending(false)
     if (error) {
@@ -121,6 +163,7 @@ export default function ProviderProfileScreen() {
       setSelectedService(null)
       setUrgency('flexible')
       setPreferredTime('flexible')
+      setQuoteImages([])
     }
   }
 
@@ -390,6 +433,30 @@ export default function ProviderProfileScreen() {
               textAlignVertical="top"
             />
 
+            {/* Photo attachments */}
+            <Text style={styles.fieldLabel}>Photos (optional)</Text>
+            <Text style={styles.fieldHint}>Add photos to help describe the job</Text>
+            <View style={styles.imageRow}>
+              {quoteImages.map((url, i) => (
+                <View key={i} style={styles.imageThumb}>
+                  <Image source={{ uri: url }} style={styles.imageThumbImg} />
+                  <TouchableOpacity style={styles.imageRemoveBtn} onPress={() => removeQuoteImage(url)}>
+                    <Ionicons name="close-circle" size={20} color="#EF4444" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+              {quoteImages.length < 5 && (
+                <TouchableOpacity style={styles.imageAddBtn} onPress={pickQuoteImage} disabled={uploadingImage}>
+                  {uploadingImage ? (
+                    <ActivityIndicator size="small" color="#1E40AF" />
+                  ) : (
+                    <Ionicons name="camera-outline" size={28} color="#1E40AF" />
+                  )}
+                  <Text style={styles.imageAddText}>Add</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
             {/* Preferred time */}
             <Text style={styles.fieldLabel}>Preferred time</Text>
             <View style={styles.optionRow}>
@@ -635,6 +702,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginTop: 12,
   },
+  fieldHint: { fontSize: 12, color: '#94A3B8', marginBottom: 8, marginTop: -4 },
+  imageRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
+  imageThumb: { width: 72, height: 72, borderRadius: 10, overflow: 'hidden', position: 'relative' },
+  imageThumbImg: { width: '100%', height: '100%' },
+  imageRemoveBtn: { position: 'absolute', top: -4, right: -4, backgroundColor: '#FFFFFF', borderRadius: 10 },
+  imageAddBtn: { width: 72, height: 72, borderRadius: 10, borderWidth: 1.5, borderColor: '#E0E7FF', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F8FAFC' },
+  imageAddText: { fontSize: 11, color: '#1E40AF', fontWeight: '500', marginTop: 2 },
   servicePicker: {
     marginBottom: 4,
   },
