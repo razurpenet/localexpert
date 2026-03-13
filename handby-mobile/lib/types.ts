@@ -13,6 +13,7 @@ export interface Profile {
   bio: string | null
   lat: number | null
   lng: number | null
+  languages: string[]
   created_at: string
 }
 

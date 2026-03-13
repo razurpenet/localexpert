@@ -10,6 +10,7 @@ interface Profile {
   city: string | null
   postcode: string | null
   bio: string | null
+  languages: string[]
 }
 
 interface AuthContextType {
