@@ -116,6 +116,7 @@ export default function ProviderDashboard() {
     { label: 'Upload portfolio photos', done: portfolioCount > 0 },
     { label: 'Get your first review', done: (details?.review_count ?? 0) > 0 },
     { label: 'Get Handby Verified (3+ reviews, verified credential, complete profile)', done: details?.is_verified === true },
+    { label: 'Verify your Right to Work', done: details?.rtw_verified === true },
   ]
 
   const onRefresh = () => { setRefreshing(true); fetchAll() }
@@ -125,6 +126,7 @@ export default function ProviderDashboard() {
     { icon: 'cash-outline', label: 'Earnings', route: '/(provider)/earnings' },
     { icon: 'construct', label: 'Services', route: '/(provider)/manage-services' },
     { icon: 'shield-checkmark', label: 'Credentials', route: '/(provider)/credentials' },
+    { icon: 'document-text', label: 'Right to Work', route: '/(provider)/rtw-verification' },
   ]
 
   if (loading) {
