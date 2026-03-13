@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { View, Text, FlatList, TextInput, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native'
+import { View, Text, FlatList, TextInput, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, Image, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -150,6 +150,16 @@ export default function ChatScreen() {
         <View style={{ width: 24 }} />
       </View>
 
+      {request?.images?.length > 0 && (
+        <View style={styles.quoteImageBanner}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {request.images.map((url: string, i: number) => (
+              <Image key={i} source={{ uri: url }} style={styles.quoteImageBannerImg} />
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
       {loading ? (
         <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
       ) : (
@@ -250,6 +260,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   headerTitle: { fontSize: 17, fontWeight: '600', color: colors.textPrimary },
+  quoteImageBanner: { paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#F8FAFC', borderBottomWidth: 1, borderBottomColor: '#E0E7FF' },
+  quoteImageBannerImg: { width: 80, height: 80, borderRadius: 10, marginRight: 8 },
   messageList: { padding: 16, paddingBottom: 8, flexGrow: 1 },
   bubble: { maxWidth: '80%', borderRadius: 16, padding: 12, marginBottom: 8 },
   bubbleMe: { alignSelf: 'flex-end', backgroundColor: colors.primary, borderBottomRightRadius: 4 },
