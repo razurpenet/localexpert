@@ -26,6 +26,7 @@ export interface ProviderDetails {
   avg_rating: number
   review_count: number
   is_verified: boolean
+  rtw_verified: boolean
 }
 
 export interface Category {
@@ -138,6 +139,20 @@ export interface Favourite {
   id: string
   customer_id: string
   provider_id: string
+  created_at: string
+}
+
+export type RtwStatus = 'pending' | 'verified' | 'rejected' | 'expired'
+
+export interface RtwCheck {
+  id: string
+  provider_id: string
+  share_code: string
+  date_of_birth: string
+  status: RtwStatus
+  verified_at: string | null
+  expires_at: string | null
+  reviewer_notes: string | null
   created_at: string
 }
 
