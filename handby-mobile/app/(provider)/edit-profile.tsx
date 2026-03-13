@@ -10,6 +10,14 @@ import { Avatar } from '../../components/ui/Avatar'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
 
+const LANGUAGES = [
+  'English', 'Polish', 'Romanian', 'Urdu', 'Bengali', 'Gujarati',
+  'Punjabi', 'Arabic', 'Somali', 'French', 'Portuguese', 'Spanish',
+  'Turkish', 'Italian', 'Yoruba', 'Igbo', 'Twi', 'Swahili',
+  'Hindi', 'Tamil', 'Mandarin', 'Cantonese', 'Tagalog', 'Lithuanian',
+  'Bulgarian', 'Russian', 'Ukrainian', 'Farsi', 'Pashto', 'Tigrinya',
+] as const
+
 export default function ProviderEditProfileScreen() {
   const { user, profile, refreshProfile } = useAuth()
   const router = useRouter()
@@ -20,6 +28,7 @@ export default function ProviderEditProfileScreen() {
   const [postcode, setPostcode] = useState(profile?.postcode ?? '')
   const [bio, setBio] = useState(profile?.bio ?? '')
   const [avatarUri, setAvatarUri] = useState(profile?.avatar_url ?? null)
+  const [languages, setLanguages] = useState<string[]>([])
 
   const [businessName, setBusinessName] = useState('')
   const [yearsExp, setYearsExp] = useState('')
@@ -28,6 +37,12 @@ export default function ProviderEditProfileScreen() {
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (profile) {
+      setLanguages((profile as any).languages ?? [])
+    }
+  }, [profile])
 
   useEffect(() => {
     if (!user) return
@@ -41,6 +56,12 @@ export default function ProviderEditProfileScreen() {
         }
       })
   }, [user])
+
+  function toggleLanguage(lang: string) {
+    setLanguages(prev =>
+      prev.includes(lang) ? prev.filter(l => l !== lang) : [...prev, lang]
+    )
+  }
 
   async function pickAvatar() {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -82,6 +103,7 @@ export default function ProviderEditProfileScreen() {
       city: city.trim() || null,
       postcode: postcode.trim() || null,
       bio: bio.trim() || null,
+      languages,
     }).eq('id', user!.id)
 
     if (profileError) { setError(profileError.message); setSaving(false); return }
@@ -153,6 +175,21 @@ export default function ProviderEditProfileScreen() {
             </View>
           </View>
 
+          <Text style={styles.sectionTitle}>Languages Spoken</Text>
+          <View style={styles.languageGrid}>
+            {LANGUAGES.map(lang => (
+              <TouchableOpacity
+                key={lang}
+                style={[styles.langChip, languages.includes(lang) && styles.langChipActive]}
+                onPress={() => toggleLanguage(lang)}
+              >
+                <Text style={[styles.langChipText, languages.includes(lang) && styles.langChipTextActive]}>
+                  {lang}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           <View style={styles.btnWrap}>
             <Button title="Save changes" onPress={handleSave} loading={saving} />
           </View>
@@ -180,4 +217,9 @@ const styles = StyleSheet.create({
   errorBox: { backgroundColor: '#FEE2E2', borderWidth: 1, borderColor: '#FECACA', borderRadius: 12, padding: 12, marginHorizontal: 16, marginBottom: 16 },
   errorText: { color: '#DC2626', fontSize: 14 },
   btnWrap: { paddingHorizontal: 16, marginTop: 24 },
+  languageGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, marginBottom: 24 },
+  langChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E0E7FF' },
+  langChipActive: { backgroundColor: '#1E40AF', borderColor: '#1E40AF' },
+  langChipText: { fontSize: 13, fontWeight: '500', color: '#475569' },
+  langChipTextActive: { color: '#FFFFFF' },
 })
