@@ -269,6 +269,12 @@ export default function ProviderProfileScreen() {
             </View>
           )}
           {provider.bio && <Text style={styles.bio}>{provider.bio}</Text>}
+          {provider.languages?.length > 0 && (
+            <View style={styles.languagesRow}>
+              <Ionicons name="language-outline" size={16} color="#475569" />
+              <Text style={styles.languagesText}>{provider.languages.join(' · ')}</Text>
+            </View>
+          )}
         </View>
 
         {/* Trust Badges */}
@@ -512,6 +518,8 @@ const styles = StyleSheet.create({
   pulseDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#16A34A' },
   availText: { color: '#16A34A', fontWeight: '600', fontSize: 14 },
   bio: { fontSize: 14, color: '#4B5563', marginTop: 12, textAlign: 'center', lineHeight: 20 },
+  languagesRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, justifyContent: 'center' },
+  languagesText: { fontSize: 13, color: '#475569', flex: 1 },
   section: { marginTop: 24, paddingHorizontal: 16 },
   sectionTitle: { fontSize: 18, fontWeight: '700', color: '#1E3A8A', marginBottom: 12 },
   quoteSection: {
