@@ -18,6 +18,8 @@ interface CredentialItem {
   document_url: string
   verified: boolean
   expires_at: string | null
+  coverage_amount: string | null
+  insurer_name: string | null
   created_at: string
 }
 
@@ -33,6 +35,8 @@ export default function CredentialsScreen() {
   const [type, setType] = useState<string>('certification')
   const [expiresAt, setExpiresAt] = useState('')
   const [docUri, setDocUri] = useState<string | null>(null)
+  const [coverageAmount, setCoverageAmount] = useState('')
+  const [insurerName, setInsurerName] = useState('')
 
   const fetchCreds = useCallback(async () => {
     if (!user) return
@@ -80,11 +84,14 @@ export default function CredentialsScreen() {
       type,
       document_url: publicUrl,
       expires_at: expiresAt.trim() || null,
+      coverage_amount: type === 'insurance' ? (coverageAmount.trim() || null) : null,
+      insurer_name: type === 'insurance' ? (insurerName.trim() || null) : null,
     })
 
     setSaving(false)
     setShowForm(false)
     setLabel(''); setType('certification'); setExpiresAt(''); setDocUri(null)
+    setCoverageAmount(''); setInsurerName('')
     fetchCreds()
   }
 
@@ -142,6 +149,12 @@ export default function CredentialsScreen() {
                       <Text style={styles.expires}>Expires: {new Date(item.expires_at).toLocaleDateString()}</Text>
                     )}
                   </View>
+                  {item.type === 'insurance' && item.insurer_name && (
+                    <Text style={styles.insurerText}>{item.insurer_name}</Text>
+                  )}
+                  {item.type === 'insurance' && item.coverage_amount && (
+                    <Text style={styles.coverageText}>Coverage: {item.coverage_amount}</Text>
+                  )}
                 </View>
                 <View style={styles.verifiedBadge}>
                   <Ionicons name={item.verified ? 'checkmark-circle' : 'time-outline'} size={20}
@@ -193,6 +206,13 @@ export default function CredentialsScreen() {
 
               <Input label="Expiry Date (YYYY-MM-DD)" value={expiresAt} onChangeText={setExpiresAt} placeholder="2027-01-01" />
 
+              {type === 'insurance' && (
+                <>
+                  <Input label="Insurance Provider" value={insurerName} onChangeText={setInsurerName} placeholder="e.g. Zego, Simply Business" />
+                  <Input label="Coverage Amount" value={coverageAmount} onChangeText={setCoverageAmount} placeholder="e.g. £1,000,000" />
+                </>
+              )}
+
               <View>
                 <Text style={styles.fieldLabel}>Document</Text>
                 <TouchableOpacity style={styles.uploadBtn} onPress={pickDocument}>
@@ -223,6 +243,8 @@ const styles = StyleSheet.create({
   cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 },
   typeBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
   expires: { fontSize: 12, color: '#475569' },
+  insurerText: { fontSize: 12, color: '#475569', marginTop: 2 },
+  coverageText: { fontSize: 12, color: '#16A34A', fontWeight: '600', marginTop: 2 },
   verifiedBadge: { alignItems: 'center', gap: 2 },
   empty: { alignItems: 'center', marginTop: 60, gap: 8 },
   emptyText: { fontSize: 18, fontWeight: '600', color: '#475569' },
