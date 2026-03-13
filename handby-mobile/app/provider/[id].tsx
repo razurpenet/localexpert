@@ -244,6 +244,12 @@ export default function ProviderProfileScreen() {
                 <Text style={styles.verifiedText}>Verified</Text>
               </View>
             )}
+            {details?.rtw_verified && (
+              <View style={styles.rtwBadge}>
+                <Ionicons name="document-text" size={12} color="#16A34A" />
+                <Text style={styles.rtwText}>RTW Verified</Text>
+              </View>
+            )}
           </View>
           {provider.city && (
             <View style={styles.locationRow}>
@@ -633,6 +639,11 @@ const styles = StyleSheet.create({
   insuranceBadgeTitle: { fontSize: 14, fontWeight: '700', color: '#1E3A8A' },
   insuranceBadgeInsurer: { fontSize: 12, color: '#475569', marginLeft: 28 },
   insuranceBadgeCoverage: { fontSize: 13, fontWeight: '600', color: '#16A34A', marginLeft: 28 },
+  rtwBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    backgroundColor: '#F0FDF4', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
+  },
+  rtwText: { fontSize: 11, fontWeight: '700', color: '#16A34A' },
   // Services
   serviceCard: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',

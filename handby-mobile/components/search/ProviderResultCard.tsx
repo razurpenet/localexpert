@@ -20,6 +20,7 @@ interface Props {
   badge_level?: 'new' | 'rising' | 'top'
   credential_badges?: string[]   // e.g. ['Gas Safe', 'DBS Checked', 'Insured']
   is_verified?: boolean
+  rtw_verified?: boolean
   isTopMatch?: boolean
 }
 
@@ -72,6 +73,12 @@ export function ProviderResultCard(props: Props) {
             )}
             {props.is_verified && (
               <Ionicons name="shield-checkmark" size={14} color="#1E40AF" />
+            )}
+            {props.rtw_verified && (
+              <View style={styles.rtwMini}>
+                <Ionicons name="document-text" size={10} color="#16A34A" />
+                <Text style={styles.rtwMiniText}>RTW</Text>
+              </View>
             )}
           </View>
 
@@ -203,4 +210,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#D97706',
   },
+  rtwMini: {
+    flexDirection: 'row', alignItems: 'center', gap: 2,
+    backgroundColor: '#F0FDF4', borderRadius: 4, paddingHorizontal: 4, paddingVertical: 2,
+  },
+  rtwMiniText: { fontSize: 9, fontWeight: '700', color: '#16A34A' },
 })

@@ -21,6 +21,7 @@ interface Result {
     response_time_mins?: number | null
     badge_level?: 'new' | 'rising' | 'top'
     is_verified?: boolean
+    rtw_verified?: boolean
   }
   primary_category: string | null
   min_price: number | null
@@ -256,6 +257,7 @@ export default function SearchScreen() {
               badge_level={item.provider_details?.badge_level as any ?? 'new'}
               credential_badges={item.credential_badges}
               is_verified={item.provider_details?.is_verified ?? false}
+              rtw_verified={item.provider_details?.rtw_verified ?? false}
               isTopMatch={index === 0 && !filter}
             />
           )}
