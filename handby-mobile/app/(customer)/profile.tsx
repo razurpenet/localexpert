@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform, ScrollView } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform, ScrollView, Linking } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
@@ -45,7 +45,8 @@ export default function ProfileScreen() {
           <MenuItem icon="person-outline" label="Edit Profile" onPress={() => router.push('/(customer)/edit-profile')} />
           <MenuItem icon="heart-outline" label="Favourites" onPress={() => router.push('/(customer)/favourites')} />
           <MenuItem icon="notifications-outline" label="Notifications" />
-          <MenuItem icon="shield-checkmark-outline" label="Privacy" />
+          <MenuItem icon="document-text-outline" label="Terms of Service" onPress={() => Linking.openURL('https://handby.uk/terms')} />
+          <MenuItem icon="shield-checkmark-outline" label="Privacy Policy" onPress={() => Linking.openURL('https://handby.uk/privacy')} />
           <MenuItem icon="help-circle-outline" label="Help & Support" />
         </View>
 

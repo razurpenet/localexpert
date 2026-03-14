@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import { useAuth } from '../../lib/auth-context'
 import { supabase } from '../../lib/supabase'
+import { isAllowedImage, getMimeType, getFileExtension, sanitize, userFriendlyError } from '../../lib/validation'
 
 interface PortfolioItem {
   id: string
@@ -61,11 +62,11 @@ export default function PhotosScreen() {
     }
     const { error } = await supabase.from('portfolio_albums').insert({
       provider_id: user.id,
-      name: newAlbumName.trim(),
+      name: sanitize(newAlbumName, 40),
       sort_order: albums.length,
     })
     if (error) {
-      Alert.alert('Error', error.message.includes('duplicate') ? 'Album name already exists' : error.message)
+      Alert.alert('Error', error.message.includes('duplicate') ? 'Album name already exists' : userFriendlyError('creating album'))
       return
     }
     setNewAlbumName('')
@@ -128,9 +129,14 @@ export default function PhotosScreen() {
 
     if (result.canceled || !result.assets[0]) return
 
-    setUploading(true)
     const asset = result.assets[0]
-    const ext = asset.uri.split('.').pop() ?? 'jpg'
+    if (!isAllowedImage(asset.uri, asset.mimeType)) {
+      Alert.alert('Invalid file', 'Please select a JPG, PNG, or WebP image.')
+      return
+    }
+
+    setUploading(true)
+    const ext = getFileExtension(asset.uri, asset.mimeType) || 'jpg'
     const fileName = `${user!.id}/${Date.now()}.${ext}`
 
     const response = await fetch(asset.uri)
@@ -138,10 +144,10 @@ export default function PhotosScreen() {
 
     const { error: uploadError } = await supabase.storage
       .from('portfolio')
-      .upload(fileName, blob, { contentType: `image/${ext}` })
+      .upload(fileName, blob, { contentType: getMimeType(ext) })
 
     if (uploadError) {
-      Alert.alert('Upload failed', uploadError.message)
+      Alert.alert('Upload failed', userFriendlyError('uploading your photo'))
       setUploading(false)
       return
     }

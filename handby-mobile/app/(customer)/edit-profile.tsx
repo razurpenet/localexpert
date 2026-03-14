@@ -9,6 +9,7 @@ import { supabase } from '../../lib/supabase'
 import { Avatar } from '../../components/ui/Avatar'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
+import { sanitize, isAllowedImage, getMimeType, getFileExtension, isValidUkPhone, isValidUkPostcode, userFriendlyError } from '../../lib/validation'
 
 export default function EditProfileScreen() {
   const { user, profile, refreshProfile } = useAuth()
@@ -32,7 +33,11 @@ export default function EditProfileScreen() {
     if (result.canceled || !result.assets[0]) return
 
     const asset = result.assets[0]
-    const ext = asset.uri.split('.').pop() ?? 'jpg'
+    if (!isAllowedImage(asset.uri, asset.mimeType)) {
+      setError('Please select a JPG, PNG, or WebP image.')
+      return
+    }
+    const ext = getFileExtension(asset.uri, asset.mimeType) || 'jpg'
     const fileName = `${user!.id}/avatar.${ext}`
 
     const response = await fetch(asset.uri)
@@ -40,10 +45,10 @@ export default function EditProfileScreen() {
 
     const { error: uploadError } = await supabase.storage
       .from('avatars')
-      .upload(fileName, blob, { contentType: `image/${ext}`, upsert: true })
+      .upload(fileName, blob, { contentType: getMimeType(ext), upsert: true })
 
     if (uploadError) {
-      setError('Failed to upload avatar: ' + uploadError.message)
+      setError(userFriendlyError('uploading your photo'))
       return
     }
 
@@ -55,18 +60,26 @@ export default function EditProfileScreen() {
 
   async function handleSave() {
     setError(null)
+
+    const cleanName = sanitize(fullName, 100)
+    if (!cleanName) { setError('Full name is required.'); return }
+    const cleanPhone = phone.trim()
+    if (cleanPhone && !isValidUkPhone(cleanPhone)) { setError('Please enter a valid UK phone number.'); return }
+    const cleanPostcode = postcode.trim()
+    if (cleanPostcode && !isValidUkPostcode(cleanPostcode)) { setError('Please enter a valid UK postcode.'); return }
+
     setSaving(true)
 
     const { error: updateError } = await supabase.from('profiles').update({
-      full_name: fullName.trim(),
-      phone: phone.trim() || null,
-      city: city.trim() || null,
-      postcode: postcode.trim() || null,
-      bio: bio.trim() || null,
+      full_name: cleanName,
+      phone: cleanPhone || null,
+      city: sanitize(city, 100) || null,
+      postcode: cleanPostcode || null,
+      bio: sanitize(bio, 500) || null,
     }).eq('id', user!.id)
 
     if (updateError) {
-      setError(updateError.message)
+      setError(userFriendlyError('saving your profile'))
       setSaving(false)
       return
     }

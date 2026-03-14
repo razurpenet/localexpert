@@ -7,6 +7,7 @@ import { useAuth } from '../../lib/auth-context'
 import { supabase } from '../../lib/supabase'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
+import { sanitize, isInRange } from '../../lib/validation'
 
 interface Service {
   id: string
@@ -91,15 +92,23 @@ export default function ManageServicesScreen() {
   }
 
   async function handleSave() {
-    if (!title.trim() || !categoryId) return
+    const cleanTitle = sanitize(title, 100)
+    if (!cleanTitle || !categoryId) return
+    const price = priceFrom ? parseFloat(priceFrom) : null
+    if (price !== null && !isInRange(price, 0, 50000)) {
+      const msg = 'Price must be between £0 and £50,000.'
+      if (Platform.OS === 'web') window.alert(msg)
+      else Alert.alert('Invalid price', msg)
+      return
+    }
     setSaving(true)
 
     const payload = {
       provider_id: user!.id,
-      title: title.trim(),
-      description: description.trim() || null,
+      title: cleanTitle,
+      description: sanitize(description, 500) || null,
       category_id: categoryId,
-      price_from: priceFrom ? parseFloat(priceFrom) : null,
+      price_from: price,
       price_type: priceType,
       is_active: isActive,
     }

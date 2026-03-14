@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import { useAuth } from '../../lib/auth-context'
 import { supabase } from '../../lib/supabase'
+import { isAllowedImage, getMimeType, getFileExtension, userFriendlyError } from '../../lib/validation'
 
 interface JobRequest { id: string; message: string; status: string; profiles: { full_name: string } }
 interface JobPhotoItem { id: string; image_url: string; type: string; created_at: string }
@@ -50,18 +51,26 @@ export default function JobPhotosScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8, allowsEditing: true })
     if (result.canceled || !result.assets[0]) return
 
-    setUploading(true)
     const asset = result.assets[0]
-    const ext = asset.uri.split('.').pop() ?? 'jpg'
+    if (!isAllowedImage(asset.uri, asset.mimeType)) {
+      const msg = 'Please select a JPG, PNG, or WebP image.'
+      if (Platform.OS === 'web') window.alert(msg)
+      else Alert.alert('Invalid file', msg)
+      return
+    }
+
+    setUploading(true)
+    const ext = getFileExtension(asset.uri, asset.mimeType) || 'jpg'
     const fileName = `${user.id}/jobs/${selectedReq}/${type}_${Date.now()}.${ext}`
 
     const response = await fetch(asset.uri)
     const blob = await response.blob()
 
-    const { error } = await supabase.storage.from('portfolio').upload(fileName, blob, { contentType: `image/${ext}` })
+    const { error } = await supabase.storage.from('portfolio').upload(fileName, blob, { contentType: getMimeType(ext) })
     if (error) {
-      if (Platform.OS === 'web') window.alert(error.message)
-      else Alert.alert('Error', error.message)
+      const msg = userFriendlyError('uploading your photo')
+      if (Platform.OS === 'web') window.alert(msg)
+      else Alert.alert('Error', msg)
       setUploading(false)
       return
     }

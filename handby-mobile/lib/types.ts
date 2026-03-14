@@ -27,6 +27,7 @@ export interface ProviderDetails {
   review_count: number
   is_verified: boolean
   rtw_verified: boolean
+  citizenship_status: CitizenshipStatus | null
 }
 
 export interface Category {
@@ -141,6 +142,8 @@ export interface Favourite {
   provider_id: string
   created_at: string
 }
+
+export type CitizenshipStatus = 'uk_irish' | 'settled' | 'pre_settled' | 'visa' | 'other'
 
 export type RtwStatus = 'pending' | 'verified' | 'rejected' | 'expired'
 

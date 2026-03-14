@@ -1,66 +1,82 @@
 import { Platform } from 'react-native'
-import * as Notifications from 'expo-notifications'
 import * as Device from 'expo-device'
 import Constants from 'expo-constants'
 import { supabase } from './supabase'
 
-// Configure how notifications appear when app is in foreground
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-})
+// Detect Expo Go — expo-notifications push functionality was removed from Expo Go in SDK 53
+const isExpoGo = Constants.appOwnership === 'expo'
 
 export async function registerForPushNotifications(userId: string): Promise<string | null> {
+  if (isExpoGo) {
+    console.log('Push notifications are not supported in Expo Go (SDK 53+)')
+    return null
+  }
+
   if (!Device.isDevice) {
     console.log('Push notifications require a physical device')
     return null
   }
 
-  const { status: existingStatus } = await Notifications.getPermissionsAsync()
-  let finalStatus = existingStatus
+  try {
+    const N = await import('expo-notifications')
 
-  if (existingStatus !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync()
-    finalStatus = status
-  }
+    N.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+      }),
+    })
 
-  if (finalStatus !== 'granted') {
-    console.log('Push notification permission not granted')
+    const { status: existingStatus } = await N.getPermissionsAsync()
+    let finalStatus = existingStatus
+
+    if (existingStatus !== 'granted') {
+      const { status } = await N.requestPermissionsAsync()
+      finalStatus = status
+    }
+
+    if (finalStatus !== 'granted') {
+      console.log('Push notification permission not granted')
+      return null
+    }
+
+    const projectId = Constants.expoConfig?.extra?.eas?.projectId
+    const tokenData = await N.getExpoPushTokenAsync({
+      projectId: projectId ?? undefined,
+    })
+    const token = tokenData.data
+
+    if (Platform.OS === 'android') {
+      N.setNotificationChannelAsync('job-updates', {
+        name: 'Job Updates',
+        importance: N.AndroidImportance.HIGH,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#1E40AF',
+      })
+    }
+
+    await supabase.from('push_tokens').upsert(
+      { user_id: userId, token, platform: Platform.OS, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id, token' }
+    )
+
+    return token
+  } catch (e) {
+    console.log('Push notifications not available:', e)
     return null
   }
-
-  const projectId = Constants.expoConfig?.extra?.eas?.projectId
-  const tokenData = await Notifications.getExpoPushTokenAsync({
-    projectId: projectId ?? undefined,
-  })
-  const token = tokenData.data
-
-  if (Platform.OS === 'android') {
-    Notifications.setNotificationChannelAsync('job-updates', {
-      name: 'Job Updates',
-      importance: Notifications.AndroidImportance.HIGH,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#1E40AF',
-    })
-  }
-
-  await supabase.from('push_tokens').upsert(
-    { user_id: userId, token, platform: Platform.OS, updated_at: new Date().toISOString() },
-    { onConflict: 'user_id, token' }
-  )
-
-  return token
 }
 
 export async function removePushToken(userId: string) {
+  if (isExpoGo) return
+
   try {
+    const N = await import('expo-notifications')
     const projectId = Constants.expoConfig?.extra?.eas?.projectId
-    const tokenData = await Notifications.getExpoPushTokenAsync({
+    const tokenData = await N.getExpoPushTokenAsync({
       projectId: projectId ?? undefined,
     })
     await supabase
@@ -68,7 +84,7 @@ export async function removePushToken(userId: string) {
       .delete()
       .eq('user_id', userId)
       .eq('token', tokenData.data)
-  } catch (e) {
+  } catch {
     // Ignore errors during cleanup
   }
 }

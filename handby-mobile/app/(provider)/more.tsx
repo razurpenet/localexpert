@@ -1,13 +1,27 @@
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform, ScrollView } from 'react-native'
+import { useState, useEffect } from 'react'
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform, ScrollView, Linking } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import { useAuth } from '../../lib/auth-context'
+import { supabase } from '../../lib/supabase'
 import { Avatar } from '../../components/ui/Avatar'
+import { colors, radius, shadow } from '../../lib/theme'
 
 export default function MoreScreen() {
-  const { profile, signOut } = useAuth()
+  const { user, profile, signOut } = useAuth()
   const router = useRouter()
+  const [citizenshipStatus, setCitizenshipStatus] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!user) return
+    supabase.from('provider_details').select('citizenship_status').eq('id', user.id).single()
+      .then(({ data }) => {
+        if (data) setCitizenshipStatus(data.citizenship_status ?? null)
+      })
+  }, [user])
+
+  const needsRtw = citizenshipStatus != null && citizenshipStatus !== 'uk_irish'
 
   async function doSignOut() {
     await signOut()
@@ -32,30 +46,46 @@ export default function MoreScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Settings</Text>
 
-        <View style={styles.card}>
+        <TouchableOpacity style={styles.card} onPress={() => router.push('/(provider)/edit-profile')}>
           <Avatar uri={profile?.avatar_url ?? null} name={profile?.full_name ?? '?'} size={56} />
           <View style={styles.info}>
             <Text style={styles.name}>{profile?.full_name}</Text>
             {profile?.city && <Text style={styles.city}>{profile.city}</Text>}
           </View>
-        </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+        </TouchableOpacity>
 
+        {/* Business Tools */}
+        <Text style={styles.sectionLabel}>Business Tools</Text>
         <View style={styles.menu}>
-          <MenuItem icon="person-outline" label="Edit Profile" onPress={() => router.push('/(provider)/edit-profile')} />
           <MenuItem icon="briefcase-outline" label="Manage Services" onPress={() => router.push('/(provider)/manage-services')} />
+          <MenuItem icon="cash-outline" label="Earnings" onPress={() => router.push('/(provider)/earnings')} />
           <MenuItem icon="calendar-outline" label="Appointments" onPress={() => router.push('/(provider)/appointments')} />
           <MenuItem icon="document-text-outline" label="Quotes" onPress={() => router.push('/(provider)/quotes-list')} />
-          <MenuItem icon="camera-outline" label="Job Photos" onPress={() => router.push('/(provider)/job-photos')} />
-          <MenuItem icon="ribbon-outline" label="Credentials" onPress={() => router.push('/(provider)/credentials')} />
-          <MenuItem icon="clipboard-outline" label="Requests" onPress={() => router.push('/(provider)/requests')} />
+          <MenuItem icon="camera-outline" label="Job Photos" onPress={() => router.push('/(provider)/job-photos')} last />
+        </View>
+
+        {/* Verification & Compliance */}
+        <Text style={styles.sectionLabel}>Verification & Compliance</Text>
+        <View style={styles.menu}>
+          <MenuItem icon="ribbon-outline" label="Credentials" onPress={() => router.push('/(provider)/credentials')} last={!needsRtw} />
+          {needsRtw && (
+            <MenuItem icon="document-text-outline" label="Right to Work" onPress={() => router.push('/(provider)/rtw-verification')} last />
+          )}
+        </View>
+
+        {/* Account & Support */}
+        <Text style={styles.sectionLabel}>Account</Text>
+        <View style={styles.menu}>
+          <MenuItem icon="person-outline" label="Edit Profile" onPress={() => router.push('/(provider)/edit-profile')} />
           <MenuItem icon="notifications-outline" label="Notifications" />
           <MenuItem icon="help-circle-outline" label="Help & Support" />
-          <MenuItem icon="document-text-outline" label="Terms of Service" />
-          <MenuItem icon="shield-checkmark-outline" label="Privacy Policy" />
+          <MenuItem icon="document-text-outline" label="Terms of Service" onPress={() => Linking.openURL('https://handby.uk/terms')} />
+          <MenuItem icon="shield-checkmark-outline" label="Privacy Policy" onPress={() => Linking.openURL('https://handby.uk/privacy')} last />
         </View>
 
         <TouchableOpacity style={styles.signOut} onPress={handleSignOut}>
-          <Ionicons name="log-out-outline" size={22} color="#EF4444" />
+          <Ionicons name="log-out-outline" size={22} color={colors.error} />
           <Text style={styles.signOutText}>Sign out</Text>
         </TouchableOpacity>
 
@@ -65,38 +95,42 @@ export default function MoreScreen() {
   )
 }
 
-function MenuItem({ icon, label, onPress }: { icon: string; label: string; onPress?: () => void }) {
+function MenuItem({ icon, label, onPress, last }: { icon: string; label: string; onPress?: () => void; last?: boolean }) {
   return (
-    <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={onPress ? 0.7 : 1}>
-      <Ionicons name={icon as any} size={22} color="#475569" />
+    <TouchableOpacity style={[styles.menuItem, last && styles.menuItemLast]} onPress={onPress} activeOpacity={onPress ? 0.7 : 1}>
+      <Ionicons name={icon as any} size={22} color={colors.textBody} />
       <Text style={styles.menuLabel}>{label}</Text>
-      <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+      <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
     </TouchableOpacity>
   )
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#EFF6FF' },
-  title: { fontSize: 24, fontWeight: '700', color: '#1E3A8A', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 },
+  safe: { flex: 1, backgroundColor: colors.primaryBg },
+  title: { fontSize: 24, fontWeight: '700', color: colors.textPrimary, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 },
   card: {
-    flexDirection: 'row', gap: 16, backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20,
-    marginHorizontal: 16, marginBottom: 24,
-    shadowColor: '#1E40AF', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 1,
+    flexDirection: 'row', alignItems: 'center', gap: 16,
+    backgroundColor: colors.surface, borderRadius: radius.lg, padding: 20,
+    marginHorizontal: 16, marginBottom: 8,
+    borderWidth: 1, borderColor: colors.border,
+    ...shadow.card,
   },
   info: { flex: 1, justifyContent: 'center' },
-  name: { fontSize: 18, fontWeight: '700', color: '#1E3A8A' },
-  city: { fontSize: 14, color: '#475569', marginTop: 2 },
-  menu: { marginHorizontal: 16, borderRadius: 16, overflow: 'hidden' },
+  name: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
+  city: { fontSize: 14, color: colors.textBody, marginTop: 2 },
+  sectionLabel: { fontSize: 13, fontWeight: '600', color: colors.textMuted, paddingHorizontal: 16, marginTop: 20, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
+  menu: { marginHorizontal: 16, borderRadius: radius.lg, overflow: 'hidden', borderWidth: 1, borderColor: colors.border },
   menuItem: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: '#FFFFFF', paddingVertical: 16, paddingHorizontal: 16,
-    borderBottomWidth: 1, borderBottomColor: '#E0E7FF',
+    backgroundColor: colors.surface, paddingVertical: 16, paddingHorizontal: 16,
+    borderBottomWidth: 1, borderBottomColor: colors.border,
   },
-  menuLabel: { flex: 1, fontSize: 16, color: '#1E3A8A' },
+  menuItemLast: { borderBottomWidth: 0 },
+  menuLabel: { flex: 1, fontSize: 16, color: colors.textPrimary },
   signOut: {
     flexDirection: 'row', alignItems: 'center', gap: 10, justifyContent: 'center',
     marginTop: 32, paddingVertical: 16,
   },
-  signOutText: { fontSize: 16, fontWeight: '600', color: '#EF4444' },
-  version: { textAlign: 'center', fontSize: 12, color: '#94A3B8', marginTop: 8, marginBottom: 32 },
+  signOutText: { fontSize: 16, fontWeight: '600', color: colors.error },
+  version: { textAlign: 'center', fontSize: 12, color: colors.textMuted, marginTop: 8, marginBottom: 32 },
 })

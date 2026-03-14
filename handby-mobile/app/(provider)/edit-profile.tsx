@@ -9,6 +9,7 @@ import { supabase } from '../../lib/supabase'
 import { Avatar } from '../../components/ui/Avatar'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
+import { sanitize, isAllowedImage, getMimeType, getFileExtension, isValidUkPhone, isValidUkPostcode, isInRange, userFriendlyError } from '../../lib/validation'
 
 const LANGUAGES = [
   'English', 'Polish', 'Romanian', 'Urdu', 'Bengali', 'Gujarati',
@@ -34,6 +35,7 @@ export default function ProviderEditProfileScreen() {
   const [yearsExp, setYearsExp] = useState('')
   const [websiteUrl, setWebsiteUrl] = useState('')
   const [isAvailable, setIsAvailable] = useState(true)
+  const [citizenshipStatus, setCitizenshipStatus] = useState<string | null>(null)
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -53,6 +55,7 @@ export default function ProviderEditProfileScreen() {
           setYearsExp(data.years_exp?.toString() ?? '')
           setWebsiteUrl(data.website_url ?? '')
           setIsAvailable(data.is_available ?? true)
+          setCitizenshipStatus(data.citizenship_status ?? null)
         }
       })
   }, [user])
@@ -73,7 +76,11 @@ export default function ProviderEditProfileScreen() {
     if (result.canceled || !result.assets[0]) return
 
     const asset = result.assets[0]
-    const ext = asset.uri.split('.').pop() ?? 'jpg'
+    if (!isAllowedImage(asset.uri, asset.mimeType)) {
+      setError('Please select a JPG, PNG, or WebP image.')
+      return
+    }
+    const ext = getFileExtension(asset.uri, asset.mimeType) || 'jpg'
     const fileName = `${user!.id}/avatar.${ext}`
 
     const response = await fetch(asset.uri)
@@ -81,10 +88,10 @@ export default function ProviderEditProfileScreen() {
 
     const { error: uploadError } = await supabase.storage
       .from('avatars')
-      .upload(fileName, blob, { contentType: `image/${ext}`, upsert: true })
+      .upload(fileName, blob, { contentType: getMimeType(ext), upsert: true })
 
     if (uploadError) {
-      setError('Failed to upload avatar: ' + uploadError.message)
+      setError(userFriendlyError('uploading your photo'))
       return
     }
 
@@ -95,28 +102,39 @@ export default function ProviderEditProfileScreen() {
 
   async function handleSave() {
     setError(null)
+
+    const cleanName = sanitize(fullName, 100)
+    if (!cleanName) { setError('Full name is required.'); return }
+    const cleanPhone = phone.trim()
+    if (cleanPhone && !isValidUkPhone(cleanPhone)) { setError('Please enter a valid UK phone number.'); return }
+    const cleanPostcode = postcode.trim()
+    if (cleanPostcode && !isValidUkPostcode(cleanPostcode)) { setError('Please enter a valid UK postcode.'); return }
+    const parsedYears = yearsExp ? parseInt(yearsExp, 10) : null
+    if (parsedYears !== null && !isInRange(parsedYears, 0, 80)) { setError('Years of experience must be between 0 and 80.'); return }
+
     setSaving(true)
 
     const { error: profileError } = await supabase.from('profiles').update({
-      full_name: fullName.trim(),
-      phone: phone.trim() || null,
-      city: city.trim() || null,
-      postcode: postcode.trim() || null,
-      bio: bio.trim() || null,
+      full_name: cleanName,
+      phone: cleanPhone || null,
+      city: sanitize(city, 100) || null,
+      postcode: cleanPostcode || null,
+      bio: sanitize(bio, 500) || null,
       languages,
     }).eq('id', user!.id)
 
-    if (profileError) { setError(profileError.message); setSaving(false); return }
+    if (profileError) { setError(userFriendlyError('saving your profile')); setSaving(false); return }
 
     const { error: detailsError } = await supabase.from('provider_details').upsert({
       id: user!.id,
-      business_name: businessName.trim(),
-      years_exp: yearsExp ? parseInt(yearsExp, 10) : null,
-      website_url: websiteUrl.trim() || null,
+      business_name: sanitize(businessName, 100),
+      years_exp: parsedYears,
+      website_url: websiteUrl.trim().slice(0, 200) || null,
       is_available: isAvailable,
+      citizenship_status: citizenshipStatus,
     })
 
-    if (detailsError) { setError(detailsError.message); setSaving(false); return }
+    if (detailsError) { setError(userFriendlyError('saving business details')); setSaving(false); return }
 
     await refreshProfile()
     setSaving(false)
@@ -175,6 +193,28 @@ export default function ProviderEditProfileScreen() {
             </View>
           </View>
 
+          <Text style={styles.sectionTitle}>Citizenship Status</Text>
+          <Text style={styles.citizenshipHint}>This helps us show you the right verification options. UK & Irish citizens don't need Right to Work verification.</Text>
+          <View style={styles.citizenshipGrid}>
+            {([
+              { key: 'uk_irish', label: 'British / Irish Citizen' },
+              { key: 'settled', label: 'Settled Status / ILR' },
+              { key: 'pre_settled', label: 'Pre-Settled Status' },
+              { key: 'visa', label: 'Work Visa' },
+              { key: 'other', label: 'Other' },
+            ] as const).map(opt => (
+              <TouchableOpacity
+                key={opt.key}
+                style={[styles.citizenshipChip, citizenshipStatus === opt.key && styles.citizenshipChipActive]}
+                onPress={() => setCitizenshipStatus(opt.key)}
+              >
+                <Text style={[styles.citizenshipChipText, citizenshipStatus === opt.key && styles.citizenshipChipTextActive]}>
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           <Text style={styles.sectionTitle}>Languages Spoken</Text>
           <View style={styles.languageGrid}>
             {LANGUAGES.map(lang => (
@@ -222,4 +262,10 @@ const styles = StyleSheet.create({
   langChipActive: { backgroundColor: '#1E40AF', borderColor: '#1E40AF' },
   langChipText: { fontSize: 13, fontWeight: '500', color: '#475569' },
   langChipTextActive: { color: '#FFFFFF' },
+  citizenshipHint: { fontSize: 13, color: '#475569', paddingHorizontal: 16, marginBottom: 12, lineHeight: 18 },
+  citizenshipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, marginBottom: 8 },
+  citizenshipChip: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E0E7FF' },
+  citizenshipChipActive: { backgroundColor: '#1E40AF', borderColor: '#1E40AF' },
+  citizenshipChipText: { fontSize: 13, fontWeight: '600', color: '#475569' },
+  citizenshipChipTextActive: { color: '#FFFFFF' },
 })

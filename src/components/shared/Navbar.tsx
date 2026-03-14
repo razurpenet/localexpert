@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { LogOut, User, Search, MapPin, Settings } from 'lucide-react'
+import { LogOut, User, Search, MapPin, Settings, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { logout } from '@/app/(auth)/actions'
 
@@ -29,6 +29,11 @@ export default function Navbar({ user }: NavbarProps) {
         <Link href="/search" className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <Search className="h-4 w-4" /> Browse
         </Link>
+        {user.role === 'admin' && (
+          <Link href="/dashboard/admin" className="hidden sm:flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors font-medium">
+            <Shield className="h-4 w-4" /> Admin
+          </Link>
+        )}
 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">

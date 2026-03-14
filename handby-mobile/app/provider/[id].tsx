@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { ScrollView, View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator, TextInput, Alert, Platform, FlatList } from 'react-native'
+import { useEffect, useState, useRef } from 'react'
+import { ScrollView, View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator, TextInput, Alert, Platform, FlatList, Animated, Dimensions } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -51,6 +51,9 @@ export default function ProviderProfileScreen() {
   const [activeAlbumFilter, setActiveAlbumFilter] = useState<string | null>(null)
   const [quoteImages, setQuoteImages] = useState<string[]>([])
   const [uploadingImage, setUploadingImage] = useState(false)
+  const [hasPendingRequest, setHasPendingRequest] = useState(false)
+  const [justSent, setJustSent] = useState(false)
+  const sentAnim = useRef(new Animated.Value(0)).current
 
   useEffect(() => {
     if (!id) return
@@ -59,22 +62,47 @@ export default function ProviderProfileScreen() {
       supabase.from('profiles').select('*, provider_details(*)').eq('id', id).single(),
       supabase.from('services').select('*, categories(name)').eq('provider_id', id).eq('is_active', true),
       supabase.from('portfolio_items').select('*, album').eq('provider_id', id).order('created_at', { ascending: false }),
-      supabase.from('reviews').select('*, profiles!reviews_reviewer_id_fkey(full_name, avatar_url)').eq('provider_id', id).order('created_at', { ascending: false }),
+      supabase.from('reviews').select('*').eq('provider_id', id).order('created_at', { ascending: false }),
       supabase.from('credentials').select('*').eq('provider_id', id).eq('verified', true),
       supabase.from('portfolio_albums').select('name, sort_order').eq('provider_id', id).order('sort_order', { ascending: true }),
-    ]).then(([profileRes, servicesRes, portfolioRes, reviewsRes, credRes, albumsRes]) => {
+    ]).then(async ([profileRes, servicesRes, portfolioRes, reviewsRes, credRes, albumsRes]) => {
       setProvider(profileRes.data)
       setServices(servicesRes.data ?? [])
       setPortfolio(portfolioRes.data ?? [])
-      setReviews(reviewsRes.data ?? [])
       setCredentials(credRes.data ?? [])
       setAlbums((albumsRes.data ?? []).map((a: any) => a.name))
+
+      // Fetch reviewer profiles separately (FK join unreliable)
+      const rawReviews = reviewsRes.data ?? []
+      const reviewerIds = [...new Set(rawReviews.map((r: any) => r.reviewer_id).filter(Boolean))]
+      if (reviewerIds.length > 0) {
+        const { data: reviewerProfiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in('id', reviewerIds)
+        const rpMap = new Map((reviewerProfiles ?? []).map((p: any) => [p.id, p]))
+        setReviews(rawReviews.map((r: any) => ({ ...r, profiles: rpMap.get(r.reviewer_id) ?? null })))
+      } else {
+        setReviews(rawReviews)
+      }
+
       setLoading(false)
     })
 
     if (user) {
       supabase.from('favourites').select('id').eq('customer_id', user.id).eq('provider_id', id).maybeSingle()
         .then(({ data }) => setIsFavourited(!!data))
+
+      // Block form if customer already has a pending request to this provider
+      supabase.from('quote_requests')
+        .select('id')
+        .eq('customer_id', user.id)
+        .eq('provider_id', id)
+        .eq('status', 'pending')
+        .limit(1)
+        .then(({ data }) => {
+          if (data && data.length > 0) setHasPendingRequest(true)
+        })
     }
   }, [id, user])
 
@@ -157,13 +185,14 @@ export default function ProviderProfileScreen() {
       if (Platform.OS === 'web') { window.alert(error.message) }
       else { Alert.alert('Error', error.message) }
     } else {
-      if (Platform.OS === 'web') { window.alert('Your enquiry has been sent.') }
-      else { Alert.alert('Sent!', 'Your enquiry has been sent.') }
       setMessage('')
       setSelectedService(null)
       setUrgency('flexible')
       setPreferredTime('flexible')
       setQuoteImages([])
+      setHasPendingRequest(true)
+      setJustSent(true)
+      Animated.spring(sentAnim, { toValue: 1, useNativeDriver: true, tension: 50, friction: 8 }).start()
     }
   }
 
@@ -326,54 +355,187 @@ export default function ProviderProfileScreen() {
           )}
         </View>
 
-        {/* Trust Badges */}
+        {/* Credentials — compact inline chips below header */}
         {credentials.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Verified Credentials</Text>
-            <View style={styles.credGrid}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.credChipBar}>
+            <View style={styles.credChipRow}>
               {credentials.map(c => {
                 const iconName =
                   c.type === 'insurance' ? 'shield-checkmark' :
                   c.type === 'certification' ? 'ribbon' :
                   c.type === 'license' ? 'document-text' :
                   'checkmark-circle'
-                if (c.type === 'insurance') {
-                  return (
-                    <View key={c.id} style={styles.insuranceBadge}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Ionicons name="shield-checkmark" size={22} color="#16A34A" />
-                        <Text style={styles.insuranceBadgeTitle}>{c.label}</Text>
-                      </View>
-                      {c.insurer_name && (
-                        <Text style={styles.insuranceBadgeInsurer}>{c.insurer_name}</Text>
-                      )}
-                      {c.coverage_amount && (
-                        <Text style={styles.insuranceBadgeCoverage}>Coverage: {c.coverage_amount}</Text>
-                      )}
-                      {c.expires_at && (
-                        <Text style={styles.credExpiry}>
-                          Exp: {new Date(c.expires_at).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
-                        </Text>
-                      )}
-                    </View>
-                  )
-                }
                 return (
-                  <View key={c.id} style={styles.credCard}>
-                    <Ionicons name={iconName} size={20} color="#16A34A" />
-                    <Text style={styles.credLabel}>{c.label}</Text>
-                    <Text style={styles.credType}>
-                      {c.type.charAt(0).toUpperCase() + c.type.slice(1)}
-                    </Text>
-                    {c.expires_at && (
-                      <Text style={styles.credExpiry}>
-                        Exp: {new Date(c.expires_at).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
-                      </Text>
+                  <View key={c.id} style={styles.credChip}>
+                    <Ionicons name={iconName} size={14} color="#16A34A" />
+                    <Text style={styles.credChipText}>{c.label}</Text>
+                    {c.type === 'insurance' && c.insurer_name && (
+                      <Text style={styles.credChipSub}>{c.insurer_name}</Text>
                     )}
                   </View>
                 )
               })}
             </View>
+          </ScrollView>
+        )}
+
+        {/* Structured Quote Form (customers only) — top priority placement */}
+        {user && myProfile?.role === 'customer' && (
+          <View style={styles.quoteSection}>
+            {hasPendingRequest ? (
+              <Animated.View style={[
+                styles.sentConfirmation,
+                justSent && {
+                  opacity: sentAnim,
+                  transform: [{ scale: sentAnim.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }],
+                },
+              ]}>
+                <View style={styles.sentIconWrap}>
+                  <Ionicons name="checkmark-circle" size={48} color="#16A34A" />
+                </View>
+                <Text style={styles.sentTitle}>Request Delivered!</Text>
+                <Text style={styles.sentMessage}>
+                  We've sent your request and are nudging {details?.business_name || provider?.full_name} to respond as soon as possible.
+                </Text>
+                <View style={styles.sentDivider} />
+                <View style={styles.sentInfoRow}>
+                  <Ionicons name="time-outline" size={16} color="#D97706" />
+                  <Text style={styles.sentInfoText}>
+                    Waiting for {details?.business_name || provider?.full_name} to respond. You can send a new request once they accept or decline.
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.viewRequestBtn}
+                  onPress={() => router.push('/(customer)/bookings')}
+                >
+                  <Ionicons name="calendar-outline" size={16} color="#1E40AF" />
+                  <Text style={styles.viewRequestText}>View your bookings</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            ) : (
+              <>
+                <Text style={styles.quoteSectionTitle}>Get the Help You Need</Text>
+
+                {/* Service picker */}
+                {services.length > 1 && (
+                  <View style={styles.servicePicker}>
+                    <Text style={styles.fieldLabel}>Select a service</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.serviceChipsScroll}>
+                      <View style={styles.serviceChips}>
+                        {services.map((s: any) => (
+                          <TouchableOpacity
+                            key={s.id}
+                            style={[
+                              styles.serviceChip,
+                              selectedService?.id === s.id && styles.serviceChipActive,
+                            ]}
+                            onPress={() => setSelectedService(s)}
+                          >
+                            <Text style={[
+                              styles.serviceChipText,
+                              selectedService?.id === s.id && styles.serviceChipTextActive,
+                            ]}>
+                              {s.title}
+                            </Text>
+                            {s.price_from != null && (
+                              <Text style={[
+                                styles.serviceChipPrice,
+                                selectedService?.id === s.id && styles.serviceChipTextActive,
+                              ]}>
+                                From £{s.price_from}
+                              </Text>
+                            )}
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </ScrollView>
+                  </View>
+                )}
+
+                {/* Price indicator for selected service */}
+                {selectedService?.price_from != null && (
+                  <View style={styles.priceIndicator}>
+                    <Ionicons name="pricetag-outline" size={14} color="#1E40AF" />
+                    <Text style={styles.priceIndicatorText}>
+                      From £{selectedService.price_from}{selectedService.price_type === 'hourly' ? '/hr' : ''}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Job description */}
+                <TextInput
+                  style={styles.quoteInput}
+                  placeholder="Describe what you need..."
+                  placeholderTextColor="#94A3B8"
+                  value={message}
+                  onChangeText={setMessage}
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                />
+
+                {/* Photo attachments */}
+                <Text style={styles.fieldLabel}>Photos (optional)</Text>
+                <Text style={styles.fieldHint}>Add photos to help describe the job</Text>
+                <View style={styles.imageRow}>
+                  {quoteImages.map((url, i) => (
+                    <View key={i} style={styles.imageThumb}>
+                      <Image source={{ uri: url }} style={styles.imageThumbImg} />
+                      <TouchableOpacity style={styles.imageRemoveBtn} onPress={() => removeQuoteImage(url)}>
+                        <Ionicons name="close-circle" size={20} color="#EF4444" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                  {quoteImages.length < 5 && (
+                    <TouchableOpacity style={styles.imageAddBtn} onPress={pickQuoteImage} disabled={uploadingImage}>
+                      {uploadingImage ? (
+                        <ActivityIndicator size="small" color="#1E40AF" />
+                      ) : (
+                        <Ionicons name="camera-outline" size={28} color="#1E40AF" />
+                      )}
+                      <Text style={styles.imageAddText}>Add</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                {/* Preferred time */}
+                <Text style={styles.fieldLabel}>Preferred time</Text>
+                <View style={styles.optionRow}>
+                  {(['morning', 'afternoon', 'evening', 'flexible'] as const).map(t => (
+                    <TouchableOpacity
+                      key={t}
+                      style={[styles.optionChip, preferredTime === t && styles.optionChipActive]}
+                      onPress={() => setPreferredTime(t)}
+                    >
+                      <Text style={[styles.optionText, preferredTime === t && styles.optionTextActive]}>
+                        {t.charAt(0).toUpperCase() + t.slice(1)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Urgency */}
+                <Text style={styles.fieldLabel}>How urgent?</Text>
+                <View style={styles.optionRow}>
+                  {([
+                    { key: 'flexible' as const, label: 'Flexible', icon: 'time-outline' },
+                    { key: 'this_week' as const, label: 'This Week', icon: 'calendar-outline' },
+                    { key: 'urgent' as const, label: 'Urgent', icon: 'flash-outline' },
+                  ]).map(u => (
+                    <TouchableOpacity
+                      key={u.key}
+                      style={[styles.optionChip, urgency === u.key && styles.optionChipActive]}
+                      onPress={() => setUrgency(u.key)}
+                    >
+                      <Ionicons name={u.icon as any} size={14} color={urgency === u.key ? '#FFFFFF' : '#475569'} />
+                      <Text style={[styles.optionText, urgency === u.key && styles.optionTextActive]}>{u.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <Button title="Send request" onPress={sendQuote} loading={sending} disabled={!message.trim()} />
+              </>
+            )}
           </View>
         )}
 
@@ -394,132 +556,6 @@ export default function ProviderProfileScreen() {
                 )}
               </View>
             ))}
-          </View>
-        )}
-
-        {/* Structured Quote Form (customers only) — prominent placement */}
-        {user && myProfile?.role === 'customer' && (
-          <View style={styles.quoteSection}>
-            <Text style={styles.quoteSectionTitle}>Get the Help You Need</Text>
-
-            {/* Service picker */}
-            {services.length > 1 && (
-              <View style={styles.servicePicker}>
-                <Text style={styles.fieldLabel}>Select a service</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.serviceChipsScroll}>
-                  <View style={styles.serviceChips}>
-                    {services.map((s: any) => (
-                      <TouchableOpacity
-                        key={s.id}
-                        style={[
-                          styles.serviceChip,
-                          selectedService?.id === s.id && styles.serviceChipActive,
-                        ]}
-                        onPress={() => setSelectedService(s)}
-                      >
-                        <Text style={[
-                          styles.serviceChipText,
-                          selectedService?.id === s.id && styles.serviceChipTextActive,
-                        ]}>
-                          {s.title}
-                        </Text>
-                        {s.price_from != null && (
-                          <Text style={[
-                            styles.serviceChipPrice,
-                            selectedService?.id === s.id && styles.serviceChipTextActive,
-                          ]}>
-                            From £{s.price_from}
-                          </Text>
-                        )}
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </ScrollView>
-              </View>
-            )}
-
-            {/* Price indicator for selected service */}
-            {selectedService?.price_from != null && (
-              <View style={styles.priceIndicator}>
-                <Ionicons name="pricetag-outline" size={14} color="#1E40AF" />
-                <Text style={styles.priceIndicatorText}>
-                  From £{selectedService.price_from}{selectedService.price_type === 'hourly' ? '/hr' : ''}
-                </Text>
-              </View>
-            )}
-
-            {/* Job description */}
-            <TextInput
-              style={styles.quoteInput}
-              placeholder="Describe what you need..."
-              placeholderTextColor="#94A3B8"
-              value={message}
-              onChangeText={setMessage}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-
-            {/* Photo attachments */}
-            <Text style={styles.fieldLabel}>Photos (optional)</Text>
-            <Text style={styles.fieldHint}>Add photos to help describe the job</Text>
-            <View style={styles.imageRow}>
-              {quoteImages.map((url, i) => (
-                <View key={i} style={styles.imageThumb}>
-                  <Image source={{ uri: url }} style={styles.imageThumbImg} />
-                  <TouchableOpacity style={styles.imageRemoveBtn} onPress={() => removeQuoteImage(url)}>
-                    <Ionicons name="close-circle" size={20} color="#EF4444" />
-                  </TouchableOpacity>
-                </View>
-              ))}
-              {quoteImages.length < 5 && (
-                <TouchableOpacity style={styles.imageAddBtn} onPress={pickQuoteImage} disabled={uploadingImage}>
-                  {uploadingImage ? (
-                    <ActivityIndicator size="small" color="#1E40AF" />
-                  ) : (
-                    <Ionicons name="camera-outline" size={28} color="#1E40AF" />
-                  )}
-                  <Text style={styles.imageAddText}>Add</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            {/* Preferred time */}
-            <Text style={styles.fieldLabel}>Preferred time</Text>
-            <View style={styles.optionRow}>
-              {(['morning', 'afternoon', 'evening', 'flexible'] as const).map(t => (
-                <TouchableOpacity
-                  key={t}
-                  style={[styles.optionChip, preferredTime === t && styles.optionChipActive]}
-                  onPress={() => setPreferredTime(t)}
-                >
-                  <Text style={[styles.optionText, preferredTime === t && styles.optionTextActive]}>
-                    {t.charAt(0).toUpperCase() + t.slice(1)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Urgency */}
-            <Text style={styles.fieldLabel}>How urgent?</Text>
-            <View style={styles.optionRow}>
-              {([
-                { key: 'flexible' as const, label: 'Flexible', icon: 'time-outline' },
-                { key: 'this_week' as const, label: 'This Week', icon: 'calendar-outline' },
-                { key: 'urgent' as const, label: 'Urgent', icon: 'flash-outline' },
-              ]).map(u => (
-                <TouchableOpacity
-                  key={u.key}
-                  style={[styles.optionChip, urgency === u.key && styles.optionChipActive]}
-                  onPress={() => setUrgency(u.key)}
-                >
-                  <Ionicons name={u.icon as any} size={14} color={urgency === u.key ? '#FFFFFF' : '#475569'} />
-                  <Text style={[styles.optionText, urgency === u.key && styles.optionTextActive]}>{u.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Button title="Send request" onPress={sendQuote} loading={sending} disabled={!message.trim()} />
           </View>
         )}
 
@@ -623,22 +659,29 @@ const styles = StyleSheet.create({
     shadowColor: '#1E40AF', shadowOpacity: 0.1, shadowOffset: { width: 0, height: 4 }, shadowRadius: 12, elevation: 3,
   },
   quoteSectionTitle: { fontSize: 20, fontWeight: '700', color: '#1E3A8A', marginBottom: 16 },
-  // Credentials
-  credGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  credCard: {
-    backgroundColor: '#F0FDF4', borderRadius: 12, padding: 12, width: '48%',
-    borderWidth: 1, borderColor: '#BBF7D0', gap: 4,
+  sentConfirmation: { alignItems: 'center', paddingVertical: 8 },
+  sentIconWrap: { marginBottom: 12 },
+  sentTitle: { fontSize: 20, fontWeight: '700', color: '#16A34A', marginBottom: 8 },
+  sentMessage: { fontSize: 14, color: '#475569', textAlign: 'center', lineHeight: 20, paddingHorizontal: 8 },
+  sentDivider: { width: '100%', height: 1, backgroundColor: '#E0E7FF', marginVertical: 16 },
+  sentInfoRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-start', paddingHorizontal: 4 },
+  sentInfoText: { flex: 1, fontSize: 13, color: '#D97706', lineHeight: 18 },
+  viewRequestBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    backgroundColor: '#EFF6FF', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginTop: 16,
   },
-  credLabel: { fontSize: 13, fontWeight: '600', color: '#1E3A8A' },
-  credType: { fontSize: 11, color: '#16A34A', fontWeight: '500' },
-  credExpiry: { fontSize: 10, color: '#475569' },
-  insuranceBadge: {
-    backgroundColor: '#F0FDF4', borderRadius: 12, padding: 14, width: '100%',
-    borderWidth: 1, borderColor: '#BBF7D0', gap: 4,
+  viewRequestText: { fontSize: 14, fontWeight: '600', color: '#1E40AF' },
+  // Credential chips (compact horizontal strip)
+  credChipBar: { marginTop: 12, paddingHorizontal: 16 },
+  credChipRow: { flexDirection: 'row', gap: 8 },
+  credChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    backgroundColor: '#F0FDF4', borderRadius: 20,
+    paddingHorizontal: 12, paddingVertical: 7,
+    borderWidth: 1, borderColor: '#BBF7D0',
   },
-  insuranceBadgeTitle: { fontSize: 14, fontWeight: '700', color: '#1E3A8A' },
-  insuranceBadgeInsurer: { fontSize: 12, color: '#475569', marginLeft: 28 },
-  insuranceBadgeCoverage: { fontSize: 13, fontWeight: '600', color: '#16A34A', marginLeft: 28 },
+  credChipText: { fontSize: 12, fontWeight: '600', color: '#1E3A8A' },
+  credChipSub: { fontSize: 11, color: '#475569' },
   rtwBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 3,
     backgroundColor: '#F0FDF4', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
@@ -665,7 +708,7 @@ const styles = StyleSheet.create({
   albumFilterText: { fontSize: 13, fontWeight: '600', color: '#1E3A8A' },
   albumFilterTextActive: { color: '#FFFFFF' },
   portfolioGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  portfolioImg: { width: '31%', aspectRatio: 1, borderRadius: 12, backgroundColor: '#E2E8F0' },
+  portfolioImg: { width: (Dimensions.get('window').width - 32 - 16) / 3, height: (Dimensions.get('window').width - 32 - 16) / 3, borderRadius: 12, backgroundColor: '#E2E8F0' },
   // Reviews
   reviewCard: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, marginBottom: 8 },
   reviewHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },

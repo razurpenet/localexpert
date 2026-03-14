@@ -11,10 +11,11 @@ export default function ForgotPasswordScreen() {
   const [error, setError] = useState<string | null>(null)
 
   async function handleReset() {
+    if (!email.trim()) { setError('Please enter your email address.'); return }
     setLoading(true)
     setError(null)
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim())
-    if (error) { setError(error.message); setLoading(false); return }
+    // Always show success to prevent email enumeration
+    await supabase.auth.resetPasswordForEmail(email.trim())
     setSent(true)
     setLoading(false)
   }
@@ -23,7 +24,7 @@ export default function ForgotPasswordScreen() {
     return (
       <View style={styles.container}>
         <Text style={styles.title}>Check your email</Text>
-        <Text style={styles.subtitle}>We've sent a password reset link to {email}</Text>
+        <Text style={styles.subtitle}>If an account exists for that email, we've sent a password reset link. The link expires in 24 hours.</Text>
       </View>
     )
   }

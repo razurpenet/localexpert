@@ -3,11 +3,12 @@ import { View, Text, FlatList, StyleSheet, TouchableOpacity, Modal, ScrollView, 
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import * as ImagePicker from 'expo-image-picker'
+import * as DocumentPicker from 'expo-document-picker'
 import { useAuth } from '../../lib/auth-context'
 import { supabase } from '../../lib/supabase'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
+import { isAllowedDocument, getMimeType, getFileExtension, sanitize, userFriendlyError } from '../../lib/validation'
 
 const TYPES = ['certification', 'insurance', 'license', 'other'] as const
 
@@ -35,15 +36,17 @@ export default function CredentialsScreen() {
   const [type, setType] = useState<string>('certification')
   const [expiresAt, setExpiresAt] = useState('')
   const [docUri, setDocUri] = useState<string | null>(null)
+  const [docMimeType, setDocMimeType] = useState<string | null>(null)
   const [coverageAmount, setCoverageAmount] = useState('')
   const [insurerName, setInsurerName] = useState('')
 
   const fetchCreds = useCallback(async () => {
     if (!user) return
-    const { data } = await supabase.from('credentials')
+    const { data, error } = await supabase.from('credentials')
       .select('*')
       .eq('provider_id', user.id)
       .order('created_at', { ascending: false })
+    if (error) console.error('Fetch credentials error:', error)
     setCreds(data ?? [])
     setLoading(false)
   }, [user])
@@ -51,34 +54,46 @@ export default function CredentialsScreen() {
   useEffect(() => { fetchCreds() }, [fetchCreds])
 
   async function pickDocument() {
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 })
-    if (result.canceled || !result.assets[0]) return
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'application/pdf'],
+      copyToCacheDirectory: true,
+    })
+    if (result.canceled || !result.assets?.[0]) return
     setDocUri(result.assets[0].uri)
+    setDocMimeType(result.assets[0].mimeType ?? null)
   }
 
   async function handleSave() {
     if (!label.trim() || !docUri || !user) return
+    if (!isAllowedDocument(docUri, docMimeType)) {
+      const msg = 'Please select a JPG, PNG, WebP, or PDF file.'
+      if (Platform.OS === 'web') window.alert(msg)
+      else Alert.alert('Invalid file', msg)
+      return
+    }
     setSaving(true)
 
-    const ext = docUri.split('.').pop() ?? 'jpg'
+    const ext = getFileExtension(docUri, docMimeType) || 'jpg'
     const fileName = `${user.id}/credentials/${Date.now()}.${ext}`
     const response = await fetch(docUri)
     const blob = await response.blob()
 
     const { error: uploadError } = await supabase.storage
       .from('portfolio')
-      .upload(fileName, blob, { contentType: `image/${ext}` })
+      .upload(fileName, blob, { contentType: getMimeType(ext) })
 
     if (uploadError) {
-      if (Platform.OS === 'web') window.alert(uploadError.message)
-      else Alert.alert('Error', uploadError.message)
+      console.error('Storage upload error:', uploadError)
+      const msg = userFriendlyError('uploading your document')
+      if (Platform.OS === 'web') window.alert(msg)
+      else Alert.alert('Error', msg)
       setSaving(false)
       return
     }
 
     const { data: { publicUrl } } = supabase.storage.from('portfolio').getPublicUrl(fileName)
 
-    await supabase.from('credentials').insert({
+    const { error: insertError } = await supabase.from('credentials').insert({
       provider_id: user.id,
       label: label.trim(),
       type,
@@ -88,9 +103,18 @@ export default function CredentialsScreen() {
       insurer_name: type === 'insurance' ? (insurerName.trim() || null) : null,
     })
 
+    if (insertError) {
+      console.error('Credential insert error:', insertError)
+      const msg = userFriendlyError('saving your credential')
+      if (Platform.OS === 'web') window.alert(msg)
+      else Alert.alert('Error', msg)
+      setSaving(false)
+      return
+    }
+
     setSaving(false)
     setShowForm(false)
-    setLabel(''); setType('certification'); setExpiresAt(''); setDocUri(null)
+    setLabel(''); setType('certification'); setExpiresAt(''); setDocUri(null); setDocMimeType(null)
     setCoverageAmount(''); setInsurerName('')
     fetchCreds()
   }

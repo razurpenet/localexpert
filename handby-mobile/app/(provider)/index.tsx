@@ -109,14 +109,18 @@ export default function ProviderDashboard() {
 
   const pendingCount = requests.filter(r => r.status === 'pending').length
 
+  // RTW only relevant for non-UK/Irish providers
+  const needsRtw = details?.citizenship_status != null && details.citizenship_status !== 'uk_irish'
+
   const checklistItems = [
     { label: 'Add a profile photo', done: !!profile?.avatar_url },
     { label: 'Set your business name', done: !!details?.business_name },
+    { label: 'Set your citizenship status', done: details?.citizenship_status != null },
     { label: 'Add your first service', done: serviceCount > 0 },
     { label: 'Upload portfolio photos', done: portfolioCount > 0 },
     { label: 'Get your first review', done: (details?.review_count ?? 0) > 0 },
     { label: 'Get Handby Verified (3+ reviews, verified credential, complete profile)', done: details?.is_verified === true },
-    { label: 'Verify your Right to Work', done: details?.rtw_verified === true },
+    ...(needsRtw ? [{ label: 'Verify your Right to Work', done: details?.rtw_verified === true }] : []),
   ]
 
   const onRefresh = () => { setRefreshing(true); fetchAll() }
@@ -126,7 +130,7 @@ export default function ProviderDashboard() {
     { icon: 'cash-outline', label: 'Earnings', route: '/(provider)/earnings' },
     { icon: 'construct', label: 'Services', route: '/(provider)/manage-services' },
     { icon: 'shield-checkmark', label: 'Credentials', route: '/(provider)/credentials' },
-    { icon: 'document-text', label: 'Right to Work', route: '/(provider)/rtw-verification' },
+    ...(needsRtw ? [{ icon: 'document-text', label: 'Right to Work', route: '/(provider)/rtw-verification' }] : []),
   ]
 
   if (loading) {

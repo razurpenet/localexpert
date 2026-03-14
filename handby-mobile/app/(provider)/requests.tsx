@@ -45,7 +45,7 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; icon: string; la
 // The next action the provider can take for each status
 const NEXT_ACTIONS: Record<string, { status: JobStatus; label: string; icon: string; bg: string; text: string; timestampField?: string }[]> = {
   pending:     [
-    { status: 'accepted', label: 'Accept & Quote', icon: 'pricetag', bg: '#F97316', text: '#FFFFFF' },
+    { status: 'accepted', label: 'Accept', icon: 'checkmark-circle', bg: '#F97316', text: '#FFFFFF' },
     { status: 'declined', label: 'Decline', icon: 'close', bg: '#FEE2E2', text: '#DC2626' },
   ],
   accepted:    [
@@ -118,10 +118,8 @@ export default function RequestsScreen() {
       .eq('id', id)
       .select()
 
-    console.log('[updateStatus]', { id, status, data, error, count })
-
     if (error) {
-      const msg = `Update failed: ${error.message} (${error.code})`
+      const msg = 'Something went wrong while updating this request. Please try again.'
       if (Platform.OS === 'web') window.alert(msg)
       else Alert.alert('Error', msg)
       return
@@ -295,18 +293,7 @@ export default function RequestsScreen() {
                     <TouchableOpacity
                       key={action.status}
                       style={[styles.actionBtn, { backgroundColor: action.bg }]}
-                      onPress={() => {
-                        if (action.status === 'accepted') {
-                          setPriceModal({
-                            visible: true,
-                            requestId: item.id,
-                            serviceTitle: item.services?.title ?? 'Service',
-                            priceFrom: item.services?.price_from ?? null,
-                          })
-                        } else {
-                          confirmAction(item.id, action.status, action.label, action.timestampField)
-                        }
-                      }}
+                      onPress={() => confirmAction(item.id, action.status, action.label, action.timestampField)}
                     >
                       <Ionicons name={action.icon as any} size={16} color={action.text} />
                       <Text style={[styles.actionText, { color: action.text }]}>{action.label}</Text>

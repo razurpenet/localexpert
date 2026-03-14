@@ -45,6 +45,7 @@ export default function ProviderLayout() {
       <Tabs.Screen name="job-photos" options={{ href: null }} />
       <Tabs.Screen name="credentials" options={{ href: null }} />
       <Tabs.Screen name="earnings" options={{ href: null }} />
+      <Tabs.Screen name="rtw-verification" options={{ href: null }} />
     </Tabs>
   )
 }

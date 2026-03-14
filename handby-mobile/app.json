@@ -30,7 +30,11 @@
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundColor": "#2563EB"
       },
-      "permissions": ["ACCESS_FINE_LOCATION", "CAMERA", "READ_EXTERNAL_STORAGE"]
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -48,7 +52,8 @@
           "icon": "./assets/images/icon.png",
           "color": "#2563EB"
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true
