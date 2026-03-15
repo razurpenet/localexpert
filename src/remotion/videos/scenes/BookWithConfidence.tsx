@@ -9,43 +9,59 @@ import {
   spring,
 } from "remotion";
 
-const wordmarkSrc = staticFile("handby-wordmark.png");
+const wordmarkSrc = staticFile("transparent-handby-wordmark.png");
 
 export const BookWithConfidence: React.FC = () => {
   const frame = useCurrentFrame();
-  const { fps, height } = useVideoConfig();
+  const { fps } = useVideoConfig();
 
-  // Quote card slides up from below
-  const cardSlide = spring({ frame, fps, config: { damping: 14, stiffness: 80 } });
-  const cardY = interpolate(cardSlide, [0, 1], [height * 0.6, 0]);
+  // Card scale-in from center
+  const cardScale = spring({
+    frame,
+    fps,
+    config: { damping: 12, stiffness: 90 },
+  });
+  const cardOpacity = interpolate(frame, [0, 8], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
 
-  // Price typing effect
-  const priceText = "\u00A345";
-  const priceChars = Math.min(
-    priceText.length,
+  // Price counter animation
+  const priceValue = Math.min(
+    45,
     Math.floor(
-      interpolate(frame, [20, 40], [0, priceText.length], {
+      interpolate(frame, [12, 35], [0, 45], {
         extrapolateLeft: "clamp",
         extrapolateRight: "clamp",
       })
     )
   );
 
-  // Checkmark draw
-  const checkProgress = interpolate(frame, [45, 60], [0, 1], {
+  // "Confirmed" badge slides in
+  const badgeProgress = spring({
+    frame: Math.max(0, frame - 40),
+    fps,
+    config: { damping: 12, stiffness: 100 },
+  });
+  const badgeScale = interpolate(badgeProgress, [0, 1], [0.5, 1]);
+  const badgeOpacity = interpolate(badgeProgress, [0, 0.3], [0, 1], {
+    extrapolateRight: "clamp",
+  });
+
+  // Checkmark draw (inside badge)
+  const checkDraw = interpolate(frame, [45, 58], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
 
-  // Logo fade + scale
-  const logoOpacity = interpolate(frame, [55, 70], [0, 1], {
+  // Bottom tagline fade
+  const taglineOpacity = interpolate(frame, [55, 68], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const logoScale = spring({
-    frame: frame - 55,
-    fps,
-    config: { damping: 10, stiffness: 100 },
+  const taglineY = interpolate(frame, [55, 68], [10, 0], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
   });
 
   return (
@@ -56,95 +72,140 @@ export const BookWithConfidence: React.FC = () => {
         alignItems: "center",
       }}
     >
-      {/* Quote card */}
+      {/* Main card */}
       <div
         style={{
-          transform: `translateY(${cardY}px)`,
+          transform: `scale(${cardScale})`,
+          opacity: cardOpacity,
           backgroundColor: "#FFFFFF",
-          borderRadius: 16,
-          padding: "16px 24px",
-          width: 260,
-          boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
-          textAlign: "center",
-        }}
-      >
-        <p style={{ fontSize: 12, color: "#64748B", margin: 0, fontFamily: "system-ui" }}>
-          Your quote
-        </p>
-        <p
-          style={{
-            fontSize: 40,
-            fontWeight: 800,
-            color: "#1E3A8A",
-            margin: "4px 0",
-            fontFamily: "system-ui",
-          }}
-        >
-          {priceText.slice(0, priceChars)}
-          <span
-            style={{
-              opacity: frame % 16 < 8 && priceChars < priceText.length ? 1 : 0,
-              color: "#94A3B8",
-            }}
-          >
-            |
-          </span>
-        </p>
-        <p style={{ fontSize: 12, color: "#64748B", margin: 0, fontFamily: "system-ui" }}>
-          Boiler repair · 2 hours
-        </p>
-
-        {/* Checkmark circle */}
-        <div style={{ marginTop: 12, display: "flex", justifyContent: "center" }}>
-          <svg width="40" height="40" viewBox="0 0 56 56">
-            <circle
-              cx="28"
-              cy="28"
-              r="24"
-              fill="none"
-              stroke="#10B981"
-              strokeWidth="3"
-              strokeDasharray={150}
-              strokeDashoffset={150 * (1 - checkProgress)}
-            />
-            <path
-              d="M18 28l7 7 13-13"
-              fill="none"
-              stroke="#10B981"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeDasharray={40}
-              strokeDashoffset={40 * (1 - Math.max(0, (checkProgress - 0.5) * 2))}
-            />
-          </svg>
-        </div>
-      </div>
-
-      {/* Handby logo */}
-      <div
-        style={{
-          marginTop: 20,
-          opacity: logoOpacity,
-          transform: `scale(${logoScale})`,
+          borderRadius: 20,
+          padding: "20px 28px 18px",
+          width: 270,
+          boxShadow: "0 12px 40px rgba(0,0,0,0.2)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
         }}
       >
-        <div
+        {/* Label */}
+        <p
           style={{
-            backgroundColor: "#FFFFFF",
-            borderRadius: 24,
-            padding: "8px 20px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            fontSize: 11,
+            color: "#94A3B8",
+            margin: 0,
+            fontFamily: "system-ui",
+            letterSpacing: 1.5,
+            textTransform: "uppercase",
+            fontWeight: 600,
           }}
         >
-          <Img src={wordmarkSrc} style={{ width: 160, height: "auto" }} />
+          Your quote
+        </p>
+
+        {/* Price */}
+        <p
+          style={{
+            fontSize: 44,
+            fontWeight: 800,
+            color: "#1E293B",
+            margin: "4px 0",
+            fontFamily: "system-ui",
+            lineHeight: 1.1,
+          }}
+        >
+          £{priceValue}
+        </p>
+
+        {/* Service detail */}
+        <p
+          style={{
+            fontSize: 13,
+            color: "#64748B",
+            margin: "0 0 16px",
+            fontFamily: "system-ui",
+          }}
+        >
+          Boiler repair · 2 hrs
+        </p>
+
+        {/* Divider */}
+        <div
+          style={{
+            width: "100%",
+            height: 1,
+            backgroundColor: "#F1F5F9",
+            marginBottom: 16,
+          }}
+        />
+
+        {/* Confirmed badge */}
+        <div
+          style={{
+            opacity: badgeOpacity,
+            transform: `scale(${badgeScale})`,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            backgroundColor: "#F0FDF4",
+            borderRadius: 24,
+            padding: "8px 18px",
+          }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="11" fill="#10B981" />
+            <path
+              d="M7 12l3.5 3.5L17 9"
+              fill="none"
+              stroke="#FFFFFF"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeDasharray={20}
+              strokeDashoffset={20 * (1 - checkDraw)}
+            />
+          </svg>
+          <span
+            style={{
+              fontSize: 14,
+              fontWeight: 700,
+              color: "#059669",
+              fontFamily: "system-ui",
+            }}
+          >
+            Booking confirmed
+          </span>
         </div>
-        <p style={{ fontSize: 12, color: "#94A3B8", marginTop: 6, fontFamily: "system-ui" }}>
+      </div>
+
+      {/* Bottom branding — wordmark + tagline */}
+      <div
+        style={{
+          marginTop: 12,
+          opacity: taglineOpacity,
+          transform: `translateY(${taglineY}px)`,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 8,
+        }}
+      >
+        <Img
+          src={wordmarkSrc}
+          style={{
+            width: 340,
+            height: 340,
+            marginTop: -55,
+            marginBottom: -65,
+          }}
+        />
+        <p
+          style={{
+            fontSize: 12,
+            color: "#CBD5E1",
+            margin: 0,
+            fontFamily: "system-ui",
+          }}
+        >
           Book with confidence
         </p>
       </div>

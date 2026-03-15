@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#EFF6FF',
   },
-  cardsSection: {
+cardsSection: {
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 24,

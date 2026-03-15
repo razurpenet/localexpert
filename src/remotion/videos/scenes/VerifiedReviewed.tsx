@@ -80,10 +80,13 @@ export const VerifiedReviewed: React.FC = () => {
           padding: 24,
           width: 300,
           boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
         }}
       >
         {/* Avatar + name */}
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
           <div
             style={{
               width: 52,
@@ -99,18 +102,18 @@ export const VerifiedReviewed: React.FC = () => {
               JD
             </span>
           </div>
-          <div>
+          <div style={{ textAlign: "center" }}>
             <p style={{ fontSize: 16, fontWeight: 700, color: "#1E3A8A", margin: 0, fontFamily: "system-ui" }}>
               James Davies
             </p>
-            <p style={{ fontSize: 12, color: "#64748B", margin: 0, fontFamily: "system-ui" }}>
+            <p style={{ fontSize: 12, color: "#64748B", margin: "2px 0 0", fontFamily: "system-ui" }}>
               Plumber · London
             </p>
           </div>
         </div>
 
         {/* Star rating */}
-        <div style={{ display: "flex", gap: 4, marginTop: 16, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 4, marginTop: 16, alignItems: "center", justifyContent: "center" }}>
           {stars.map((progress, i) => (
             <svg
               key={i}
@@ -131,7 +134,7 @@ export const VerifiedReviewed: React.FC = () => {
         </div>
 
         {/* Verified badge + reviews */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginTop: 14 }}>
           <div
             style={{
               transform: `scale(${badgeScale})`,
